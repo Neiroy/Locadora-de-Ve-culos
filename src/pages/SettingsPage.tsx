@@ -6,6 +6,7 @@ import type { Profile, Role } from "../types/entities";
 import { useAuth } from "../hooks/useAuth";
 import { Shield, Building2, FileText, Settings2, Users, Lock } from "lucide-react";
 import { DEFAULT_BRAND_LOGO_URL, DEFAULT_BRAND_NAME, normalizeLogoUrl } from "../lib/branding";
+import { maskCpfCnpj, maskCurrencyInput, maskKmInput, maskPhone, unmaskCurrencyInput, unmaskKmInput } from "../lib/format";
 
 type TabKey = "geral" | "locadora" | "contrato" | "locacao" | "usuarios" | "seguranca";
 const BRANDING_BUCKET = "branding";
@@ -131,7 +132,21 @@ export const SettingsPage = () => {
       };
     });
     setContract((prev) => ({ ...prev, ...(row.contract_settings || {}) }));
-    setRental((prev) => ({ ...prev, ...(row.rental_settings || {}) }));
+    setRental((prev) => {
+      const dbRental = (row?.rental_settings || {}) as Record<string, unknown>;
+      return {
+        ...prev,
+        ...dbRental,
+        valorKmExcedente:
+          dbRental.valorKmExcedente === null || dbRental.valorKmExcedente === undefined || dbRental.valorKmExcedente === ""
+            ? ""
+            : maskCurrencyInput(String(dbRental.valorKmExcedente)),
+        kmLivre:
+          dbRental.kmLivre === null || dbRental.kmLivre === undefined || dbRental.kmLivre === ""
+            ? ""
+            : maskKmInput(String(dbRental.kmLivre)),
+      };
+    });
     setLoading(false);
   };
 
@@ -305,8 +320,22 @@ export const SettingsPage = () => {
                     <div className="grid gap-3 md:grid-cols-2">
                       <div><Label>Nome da locadora</Label><Input value={company.nomeLocadora} onChange={(e) => setCompany({ ...company, nomeLocadora: e.target.value })} /></div>
                       <div><Label>Nome fantasia</Label><Input value={company.nomeFantasia} onChange={(e) => setCompany({ ...company, nomeFantasia: e.target.value })} /></div>
-                      <div><Label>CPF/CNPJ</Label><Input value={company.cpfCnpj} onChange={(e) => setCompany({ ...company, cpfCnpj: e.target.value })} /></div>
-                      <div><Label>Telefone</Label><Input value={company.telefone} onChange={(e) => setCompany({ ...company, telefone: e.target.value })} /></div>
+                      <div>
+                        <Label>CPF/CNPJ</Label>
+                        <Input
+                          value={company.cpfCnpj}
+                          onChange={(e) => setCompany({ ...company, cpfCnpj: maskCpfCnpj(e.target.value) })}
+                          placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                        />
+                      </div>
+                      <div>
+                        <Label>Telefone</Label>
+                        <Input
+                          value={company.telefone}
+                          onChange={(e) => setCompany({ ...company, telefone: maskPhone(e.target.value) })}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
                       <div><Label>Email</Label><Input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} /></div>
                       <div><Label>Endereço</Label><Input value={company.endereco} onChange={(e) => setCompany({ ...company, endereco: e.target.value })} /></div>
                       <div><Label>Cidade</Label><Input value={company.cidade} onChange={(e) => setCompany({ ...company, cidade: e.target.value })} /></div>
@@ -346,8 +375,26 @@ export const SettingsPage = () => {
                   <Card className="space-y-3">
                     <div className="grid gap-3 md:grid-cols-2">
                       <div><Label>Hora limite devolução</Label><Input type="time" value={rental.horaLimiteDevolucao} onChange={(e) => setRental({ ...rental, horaLimiteDevolucao: e.target.value })} /></div>
-                      <div><Label>KM livre (opcional)</Label><Input value={rental.kmLivre} onChange={(e) => setRental({ ...rental, kmLivre: e.target.value })} /></div>
-                      <div><Label>Valor por KM excedente</Label><Input value={rental.valorKmExcedente} onChange={(e) => setRental({ ...rental, valorKmExcedente: e.target.value })} /></div>
+                      <div>
+                        <Label>KM livre (opcional)</Label>
+                        <Input
+                          value={rental.kmLivre}
+                          placeholder="Ex: 1.000"
+                          onChange={(e) => setRental({ ...rental, kmLivre: maskKmInput(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Valor por KM excedente</Label>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">R$</span>
+                          <Input
+                            className="pl-10"
+                            value={rental.valorKmExcedente}
+                            placeholder="Ex: 1,50"
+                            onChange={(e) => setRental({ ...rental, valorKmExcedente: maskCurrencyInput(e.target.value) })}
+                          />
+                        </div>
+                      </div>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Cobrar diária extra por atraso <input type="checkbox" checked={rental.cobrarDiariaExtra} onChange={(e) => setRental({ ...rental, cobrarDiariaExtra: e.target.checked })} /></label>
@@ -355,7 +402,19 @@ export const SettingsPage = () => {
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Permitir cancelamento <input type="checkbox" checked={rental.permitirCancelamento} onChange={(e) => setRental({ ...rental, permitirCancelamento: e.target.checked })} /></label>
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Permitir edição finalizada <input type="checkbox" checked={rental.permitirEdicaoFinalizada} onChange={(e) => setRental({ ...rental, permitirEdicaoFinalizada: e.target.checked })} /></label>
                     </div>
-                    <Button disabled={saving} onClick={() => saveSection("rental_settings", rental)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
+                    <Button
+                      disabled={saving}
+                      onClick={() =>
+                        saveSection("rental_settings", {
+                          ...rental,
+                          kmLivre: rental.kmLivre.trim() === "" ? null : unmaskKmInput(rental.kmLivre),
+                          valorKmExcedente:
+                            rental.valorKmExcedente.trim() === "" ? null : unmaskCurrencyInput(rental.valorKmExcedente),
+                        })
+                      }
+                    >
+                      {saving ? "Salvando..." : "Salvar alterações"}
+                    </Button>
                   </Card>
                 )}
 

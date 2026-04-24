@@ -199,7 +199,18 @@ export const CarsPage = () => {
           <div><Label>Ano</Label><Input value={form.ano} placeholder="2025" onChange={(e) => setForm({ ...form, ano: maskYear(e.target.value) })} /></div>
           <div><Label>Cor</Label><Input value={form.cor} onChange={(e) => setForm({ ...form, cor: e.target.value })} /></div>
           <div><Label>KM Atual</Label><Input value={form.km_atual} placeholder="Ex: 12.500" onChange={(e) => setForm({ ...form, km_atual: maskKmInput(e.target.value) })} /></div>
-          <div><Label>Valor diária</Label><Input value={form.valor_diaria} placeholder="Ex: 189,90" onChange={(e) => setForm({ ...form, valor_diaria: maskCurrencyInput(e.target.value) })} /></div>
+          <div>
+            <Label>Valor diária</Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">R$</span>
+              <Input
+                value={form.valor_diaria}
+                placeholder="Ex: 189,90"
+                className="pl-10"
+                onChange={(e) => setForm({ ...form, valor_diaria: maskCurrencyInput(e.target.value) })}
+              />
+            </div>
+          </div>
           <div><Label>Status</Label><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as CarStatus })}><option value="disponivel">Disponível</option><option value="alugado">Alugado</option><option value="manutencao">Manutenção</option></Select></div>
           <div className="md:col-span-2"><Label>Observações</Label><Input value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /></div>
         </div>

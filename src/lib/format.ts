@@ -25,6 +25,21 @@ export const maskCpf = (raw: string) =>
     .replace(/(\d{3})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
+export const maskCpfCnpj = (raw: string) => {
+  const digits = raw.replace(/\D/g, "").slice(0, 14);
+  if (digits.length <= 11) {
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+};
+
 export const maskPhone = (raw: string) => {
   const v = raw.replace(/\D/g, "").slice(0, 11);
   if (v.length <= 10) {
@@ -63,15 +78,40 @@ export const maskKmInput = (raw: string) => {
 export const unmaskKmInput = (raw: string) => Number(raw.replace(/\D/g, "") || 0);
 
 export const maskCurrencyInput = (raw: string) => {
-  const cleaned = raw.replace(/[^\d,]/g, "");
-  const [intPart, decPart = ""] = cleaned.split(",");
-  const intFormatted = intPart ? new Intl.NumberFormat("pt-BR").format(Number(intPart)) : "0";
-  const decimals = decPart.slice(0, 2);
-  return decimals.length ? `${intFormatted},${decimals}` : intFormatted;
+  const normalized = raw.replace(/[^\d.,]/g, "");
+  if (!normalized) return "";
+
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+  const sepIndex = Math.max(lastComma, lastDot);
+
+  const hasDecimalSeparator = sepIndex >= 0;
+  const intDigits = normalized.slice(0, sepIndex >= 0 ? sepIndex : normalized.length).replace(/\D/g, "");
+  const decDigits = hasDecimalSeparator ? normalized.slice(sepIndex + 1).replace(/\D/g, "").slice(0, 2) : "";
+
+  const intFormatted = intDigits ? new Intl.NumberFormat("pt-BR").format(Number(intDigits)) : "0";
+
+  // Mantem a virgula ao digitar o separador, mesmo sem decimais ainda.
+  if (hasDecimalSeparator && decDigits.length === 0) return `${intFormatted},`;
+  return decDigits.length ? `${intFormatted},${decDigits}` : intFormatted;
 };
 
 export const unmaskCurrencyInput = (raw: string) => {
-  const normalized = raw.replace(/\./g, "").replace(",", ".");
+  const cleaned = raw.replace(/[^\d.,]/g, "");
+  if (!cleaned) return 0;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  const sepIndex = Math.max(lastComma, lastDot);
+
+  if (sepIndex < 0) {
+    const intDigits = cleaned.replace(/\D/g, "");
+    return Number(intDigits || 0);
+  }
+
+  const intPart = cleaned.slice(0, sepIndex).replace(/\D/g, "") || "0";
+  const decPart = cleaned.slice(sepIndex + 1).replace(/\D/g, "").slice(0, 2);
+  const normalized = decPart ? `${intPart}.${decPart}` : intPart;
   return Number(normalized || 0);
 };
 
