@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+  border: 2px solid #e2e8f0;
+}
+
+.luxury-datepicker-popper {
+  z-index: 60 !important;
+}
+
+.luxury-datepicker {
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16) !important;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif !important;
+}
+
+.luxury-datepicker .react-datepicker__header {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.luxury-datepicker .react-datepicker__day--selected,
+.luxury-datepicker .react-datepicker__time-list-item--selected {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+}
+
+.luxury-datepicker .react-datepicker__day:hover,
+.luxury-datepicker .react-datepicker__time-list-item:hover {
+  background: #e2e8f0 !important;
+  border-radius: 8px !important;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  #root {
+    min-height: auto !important;
+  }
+
+  .print-container {
+    max-width: 100%;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .contract-doc-shell {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .contract-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+}
