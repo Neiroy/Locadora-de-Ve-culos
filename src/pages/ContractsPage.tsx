@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button, Card, Input, EmptyState } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import type { Locacao } from "../types/entities";
-import { formatCurrencyBRL, formatDate } from "../lib/format";
+import { formatCurrencyBRL, formatDate, maskPlate } from "../lib/format";
 
 export const ContractsPage = () => {
   const [items, setItems] = useState<Locacao[]>([]);
@@ -40,7 +40,7 @@ export const ContractsPage = () => {
         {items.map((item) => (
           <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
             <p className="font-semibold text-slate-800">{item.clientes?.nome}</p>
-            <p className="text-sm text-slate-500">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa})</p>
+            <p className="text-sm text-slate-500">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa ? maskPlate(item.carros.placa) : "-"})</p>
             <div className="mt-2 flex items-center justify-between text-sm">
               <span>{formatDate(item.data_retirada)}</span>
               <span className="font-medium">{formatCurrencyBRL(item.valor_total)}</span>
@@ -59,7 +59,7 @@ export const ContractsPage = () => {
             {items.map((item) => (
               <tr key={item.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                 <td className="px-4 py-3 font-medium text-slate-700">{item.clientes?.nome}</td>
-                <td className="px-4 py-3 text-slate-600">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa})</td>
+                <td className="px-4 py-3 text-slate-600">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa ? maskPlate(item.carros.placa) : "-"})</td>
                 <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{formatDate(item.data_retirada)}</td>
                 <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{formatCurrencyBRL(item.valor_total)}</td>
                 <td className="px-4 py-3 text-right"><Link to={`/contratos/${item.id}`}><Button variant="outline">Visualizar</Button></Link></td>

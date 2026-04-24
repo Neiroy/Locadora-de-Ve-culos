@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge, Button, Card, EmptyState, Input, Label, Modal, SectionTitle, Select } from "../components/ui";
 import { supabase } from "../lib/supabase";
-import { formatCurrencyBRL, formatDate, formatDateTime, formatKm } from "../lib/format";
+import { formatCurrencyBRL, formatDate, formatDateTime, formatKm, maskCnh, maskCpf, maskPhone, maskPlate } from "../lib/format";
 import type { Locacao, RentalStatus } from "../types/entities";
 import { CalendarDays, Car, CircleDollarSign, FileSearch, Printer, ReceiptText } from "lucide-react";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -318,7 +318,7 @@ export const ReportsPage = () => {
                     <p className="font-semibold text-slate-800">{row.clientes?.nome || "-"}</p>
                     <Badge status={row.status as RentalStatus} />
                   </div>
-                  <p className="text-sm text-slate-600">{row.carros?.marca} {row.carros?.modelo} ({row.carros?.placa})</p>
+                  <p className="text-sm text-slate-600">{row.carros?.marca} {row.carros?.modelo} ({row.carros?.placa ? maskPlate(row.carros.placa) : "-"})</p>
                   <p className="mt-1 text-sm text-slate-500">Retirada: {formatDate(row.data_retirada)} | Devolução: {formatDate(row.data_devolucao_real)}</p>
                   <p className="mt-1 text-sm text-slate-500">KM: {formatKm(row.km_saida)} {"->"} {formatKm(row.km_entrada)} ({formatKm(toKmDriven(row))})</p>
                   <p className="mt-2 text-sm font-semibold text-slate-800">{formatCurrencyBRL(row.valor_total)}</p>
@@ -355,7 +355,7 @@ export const ReportsPage = () => {
                       <td className="px-4 py-3 font-medium text-slate-700">#{row.id.slice(0, 8)}</td>
                       <td className="px-4 py-3 text-slate-700">{row.clientes?.nome || "-"}</td>
                       <td className="px-4 py-3 text-slate-600">{row.carros?.marca} {row.carros?.modelo}</td>
-                      <td className="px-4 py-3 text-slate-600">{row.carros?.placa || "-"}</td>
+                      <td className="px-4 py-3 text-slate-600">{row.carros?.placa ? maskPlate(row.carros.placa) : "-"}</td>
                       <td className="px-4 py-3 text-slate-500">{formatDate(row.data_retirada)}</td>
                       <td className="px-4 py-3 text-slate-500">{formatDate(row.data_devolucao_real)}</td>
                       <td className="px-4 py-3 font-semibold text-slate-700">{formatCurrencyBRL(row.valor_total || 0)}</td>
@@ -426,9 +426,9 @@ export const ReportsPage = () => {
                 <SectionTitle title="Dados do cliente" />
                 <div className="mt-3 space-y-1 text-sm text-slate-600">
                   <p><strong>Nome:</strong> {selected.clientes?.nome || "-"}</p>
-                  <p><strong>CPF:</strong> {selected.clientes?.cpf || "-"}</p>
-                  <p><strong>CNH:</strong> {selected.clientes?.cnh || "-"}</p>
-                  <p><strong>Telefone:</strong> {selected.clientes?.telefone || "-"}</p>
+                  <p><strong>CPF:</strong> {selected.clientes?.cpf ? maskCpf(selected.clientes.cpf) : "-"}</p>
+                  <p><strong>CNH:</strong> {selected.clientes?.cnh ? maskCnh(selected.clientes.cnh) : "-"}</p>
+                  <p><strong>Telefone:</strong> {selected.clientes?.telefone ? maskPhone(selected.clientes.telefone) : "-"}</p>
                 </div>
               </Card>
 
@@ -437,7 +437,7 @@ export const ReportsPage = () => {
                 <div className="mt-3 space-y-1 text-sm text-slate-600">
                   <p><strong>Marca:</strong> {selected.carros?.marca || "-"}</p>
                   <p><strong>Modelo:</strong> {selected.carros?.modelo || "-"}</p>
-                  <p><strong>Placa:</strong> {selected.carros?.placa || "-"}</p>
+                  <p><strong>Placa:</strong> {selected.carros?.placa ? maskPlate(selected.carros.placa) : "-"}</p>
                   <p><strong>Ano:</strong> {selected.carros?.ano || "-"}</p>
                   <p><strong>Cor:</strong> {selected.carros?.cor || "-"}</p>
                 </div>

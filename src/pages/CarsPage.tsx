@@ -152,7 +152,7 @@ export const CarsPage = () => {
         {!loading && cars.map((car) => (
           <div key={car.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
             <p className="font-semibold text-slate-800">{car.marca} {car.modelo}</p>
-            <p className="text-sm text-slate-500">{car.placa} • {car.ano}</p>
+            <p className="text-sm text-slate-500">{maskPlate(car.placa)} • {car.ano}</p>
             <div className="mt-2 flex items-center justify-between text-sm">
               <span>{formatKm(car.km_atual)}</span>
               <span>{formatCurrencyBRL(car.valor_diaria)}</span>
@@ -179,7 +179,7 @@ export const CarsPage = () => {
             {!loading && cars.map((car) => (
               <tr key={car.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                 <td className="px-4 py-3 font-medium text-slate-700 sm:px-5">{car.marca} {car.modelo}</td>
-                <td className="px-4 py-3 text-slate-600 sm:px-5">{car.placa}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell sm:px-5">{car.ano}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell sm:px-5">{formatKm(car.km_atual)}</td><td className="hidden px-4 py-3 text-slate-600 lg:table-cell sm:px-5">{formatCurrencyBRL(car.valor_diaria)}</td><td className="px-4 py-3 sm:px-5"><Badge status={car.status} /></td>
+                <td className="px-4 py-3 text-slate-600 sm:px-5">{maskPlate(car.placa)}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell sm:px-5">{car.ano}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell sm:px-5">{formatKm(car.km_atual)}</td><td className="hidden px-4 py-3 text-slate-600 lg:table-cell sm:px-5">{formatCurrencyBRL(car.valor_diaria)}</td><td className="px-4 py-3 sm:px-5"><Badge status={car.status} /></td>
                 <td className="space-x-2 px-4 py-3 text-right sm:px-5">
                   <Button variant="outline" onClick={() => openEdit(car)}>Editar</Button>
                   <Button variant="outline" onClick={() => loadHistory(car)}>Histórico</Button>
@@ -218,7 +218,7 @@ export const CarsPage = () => {
       </Modal>
       <Modal open={!!historyTarget} title="Histórico do veículo" onClose={() => setHistoryTarget(null)}>
         <div className="mb-3 text-sm text-slate-700">
-          <p>Veículo: <strong>{historyTarget?.marca} {historyTarget?.modelo} ({historyTarget?.placa})</strong></p>
+          <p>Veículo: <strong>{historyTarget?.marca} {historyTarget?.modelo} ({historyTarget?.placa ? maskPlate(historyTarget.placa) : "-"})</strong></p>
           <p>KM atual: <strong>{formatKm(historyTarget?.km_atual)}</strong> | Status: <Badge status={historyTarget?.status || ""} /></p>
           <p>Total de locações: <strong>{history.length}</strong></p>
         </div>

@@ -3,7 +3,7 @@ import { Button, Card, Input, Label, Modal, Select, Badge, EmptyState } from "..
 import { supabase } from "../lib/supabase";
 import type { Carro, Cliente, Locacao, RentalStatus } from "../types/entities";
 import { buildContractHtml } from "../lib/contract";
-import { formatCurrencyBRL, formatDate, formatDateTime, formatKm, maskKmInput, unmaskKmInput } from "../lib/format";
+import { formatCurrencyBRL, formatDate, formatDateTime, formatKm, maskCnh, maskCpf, maskKmInput, maskPhone, maskPlate, unmaskKmInput } from "../lib/format";
 import { useAuth } from "../hooks/useAuth";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -184,7 +184,7 @@ export const RentalsPage = () => {
           {!loading && locacoes.map((item) => (
             <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
               <p className="font-semibold text-slate-800">{item.clientes?.nome}</p>
-              <p className="text-sm text-slate-500">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa})</p>
+              <p className="text-sm text-slate-500">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa ? maskPlate(item.carros.placa) : "-"})</p>
               <p className="mt-1 text-sm text-slate-500">{formatDate(item.data_retirada)} - {formatDate(item.data_prevista_devolucao)}</p>
               <div className="mt-2 flex items-center justify-between">
                 <Badge status={item.status} />
@@ -213,7 +213,7 @@ export const RentalsPage = () => {
               {!loading && locacoes.map((item) => (
                 <tr key={item.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
                   <td className="px-4 py-3 font-medium text-slate-700">{item.clientes?.nome}</td>
-                  <td className="px-4 py-3 text-slate-600">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa})</td>
+                  <td className="px-4 py-3 text-slate-600">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa ? maskPlate(item.carros.placa) : "-"})</td>
                   <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatDate(item.data_retirada)} - {formatDate(item.data_prevista_devolucao)}</td>
                   <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{formatCurrencyBRL(item.valor_total)}</td>
                   <td className="px-4 py-3"><Badge status={item.status} /></td>
@@ -238,14 +238,14 @@ export const RentalsPage = () => {
 
       <Modal open={openCreate} title="Nova locação" onClose={() => setOpenCreate(false)}>
         <div className="grid gap-4 md:grid-cols-2">
-          <div><Label>Cliente</Label><Select value={newRental.cliente_id} onChange={(e) => setNewRental({ ...newRental, cliente_id: e.target.value })}><option value="">Selecione</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nome} ({c.cpf})</option>)}</Select></div>
+          <div><Label>Cliente</Label><Select value={newRental.cliente_id} onChange={(e) => setNewRental({ ...newRental, cliente_id: e.target.value })}><option value="">Selecione</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nome} ({maskCpf(c.cpf)})</option>)}</Select></div>
           <div>
             <Label>Veículo</Label>
             <Select value={newRental.carro_id} onChange={(e) => setNewRental({ ...newRental, carro_id: e.target.value })}>
               <option value="">Selecione</option>
               {carros.map((c) => (
                 <option key={c.id} value={c.id} disabled={c.status !== "disponivel"}>
-                  {c.marca} {c.modelo} - {c.placa} ({c.status})
+                  {c.marca} {c.modelo} - {maskPlate(c.placa)} ({c.status})
                 </option>
               ))}
             </Select>
@@ -277,9 +277,9 @@ export const RentalsPage = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
                 <p className="mt-1 font-semibold text-slate-800">{clienteSelecionado?.nome || "-"}</p>
                 <p className="mt-1 text-slate-600">
-                  CPF/CNH: <strong>{clienteSelecionado ? `${clienteSelecionado.cpf} | ${clienteSelecionado.cnh}` : "-"}</strong>
+                  CPF/CNH: <strong>{clienteSelecionado ? `${maskCpf(clienteSelecionado.cpf)} | ${maskCnh(clienteSelecionado.cnh)}` : "-"}</strong>
                 </p>
-                <p className="text-slate-600">Telefone: <strong>{clienteSelecionado?.telefone || "-"}</strong></p>
+                <p className="text-slate-600">Telefone: <strong>{clienteSelecionado?.telefone ? maskPhone(clienteSelecionado.telefone) : "-"}</strong></p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-3">
@@ -288,7 +288,7 @@ export const RentalsPage = () => {
                   {carroSelecionado ? `${carroSelecionado.marca} ${carroSelecionado.modelo}` : "-"}
                 </p>
                 <p className="mt-1 text-slate-600">
-                  Placa: <strong>{carroSelecionado?.placa || "-"}</strong>
+                  Placa: <strong>{carroSelecionado?.placa ? maskPlate(carroSelecionado.placa) : "-"}</strong>
                 </p>
                 <p className="text-slate-600">KM saída: <strong>{formatKm(carroSelecionado?.km_atual)}</strong></p>
               </div>
@@ -327,7 +327,7 @@ export const RentalsPage = () => {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
               <p className="mt-1 font-semibold text-slate-800">{openReturn?.clientes?.nome || "-"}</p>
               <p className="mt-1 text-slate-600">
-                Veículo: <strong>{openReturn?.carros?.marca} {openReturn?.carros?.modelo} ({openReturn?.carros?.placa})</strong>
+                Veículo: <strong>{openReturn?.carros?.marca} {openReturn?.carros?.modelo} ({openReturn?.carros?.placa ? maskPlate(openReturn.carros.placa) : "-"})</strong>
               </p>
               <p className="text-slate-600">
                 Período: <strong>{formatDateTime(openReturn?.data_retirada)} - {formatDateTime(openReturn?.data_prevista_devolucao)}</strong>
@@ -368,7 +368,7 @@ export const RentalsPage = () => {
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
                   <p className="mt-1 font-semibold text-slate-800">{detail.clientes?.nome || "-"}</p>
                   <p className="mt-1 text-slate-600">
-                    Veículo: <strong>{detail.carros?.marca} {detail.carros?.modelo} ({detail.carros?.placa})</strong>
+                    Veículo: <strong>{detail.carros?.marca} {detail.carros?.modelo} ({detail.carros?.placa ? maskPlate(detail.carros.placa) : "-"})</strong>
                   </p>
                   <p className="text-slate-600">
                     Período: <strong>{formatDateTime(detail.data_retirada)} - {formatDateTime(detail.data_prevista_devolucao)}</strong>

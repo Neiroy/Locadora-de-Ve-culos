@@ -3,7 +3,7 @@ import { Button, Card, Input, Label, Modal, Badge, EmptyState } from "../compone
 import { supabase } from "../lib/supabase";
 import type { Cliente, Locacao } from "../types/entities";
 import { isValidCPF } from "../lib/validators";
-import { maskCnh, maskCpf, maskPhone, onlyDigits, formatDate } from "../lib/format";
+import { maskCnh, maskCpf, maskPhone, maskPlate, onlyDigits, formatDate } from "../lib/format";
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
@@ -100,8 +100,8 @@ export const ClientsPage = () => {
             <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
               <p className="font-semibold text-slate-800">{item.nome}</p>
               <p className="text-sm text-slate-500">{maskCpf(item.cpf)}</p>
-              <p className="text-sm text-slate-500">CNH: {item.cnh}</p>
-              <p className="text-sm text-slate-500">Telefone: {item.telefone || "-"}</p>
+              <p className="text-sm text-slate-500">CNH: {maskCnh(item.cnh)}</p>
+              <p className="text-sm text-slate-500">Telefone: {item.telefone ? maskPhone(item.telefone) : "-"}</p>
               <div className="mt-3 flex gap-2">
                 <Button variant="outline" onClick={() => openForm(item)}>Editar</Button>
                 <Button variant="outline" onClick={() => showHistory(item)}>Histórico</Button>
@@ -116,7 +116,7 @@ export const ClientsPage = () => {
             <tbody>
               {!loading && items.map((item) => (
                 <tr key={item.id} className="border-t border-slate-100 transition hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-medium text-slate-700">{item.nome}</td><td className="px-4 py-3 text-slate-600">{maskCpf(item.cpf)}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{item.cnh}</td><td className="hidden px-4 py-3 text-slate-600 lg:table-cell">{item.telefone || "-"}</td>
+                  <td className="px-4 py-3 font-medium text-slate-700">{item.nome}</td><td className="px-4 py-3 text-slate-600">{maskCpf(item.cpf)}</td><td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{maskCnh(item.cnh)}</td><td className="hidden px-4 py-3 text-slate-600 lg:table-cell">{item.telefone ? maskPhone(item.telefone) : "-"}</td>
                   <td className="space-x-2 px-4 py-3 text-right">
                     <Button variant="outline" onClick={() => openForm(item)}>Editar</Button>
                     <Button variant="outline" onClick={() => showHistory(item)}>Histórico</Button>
@@ -142,7 +142,7 @@ export const ClientsPage = () => {
             <ul className="space-y-2 text-slate-600">
               {history.slice(0, 8).map((h) => (
                 <li key={h.id} className="rounded-lg border border-slate-200 p-3">
-                  <p>{h.carros?.marca} {h.carros?.modelo} - {h.carros?.placa}</p>
+                  <p>{h.carros?.marca} {h.carros?.modelo} - {h.carros?.placa ? maskPlate(h.carros.placa) : "-"}</p>
                   <p>{formatDate(h.data_retirada)} | <Badge status={h.status} /></p>
                 </li>
               ))}
