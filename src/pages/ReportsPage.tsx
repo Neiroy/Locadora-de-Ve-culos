@@ -4,7 +4,7 @@ import { Badge, Button, Card, EmptyState, Input, Label, Modal, SectionTitle, Sel
 import { supabase } from "../lib/supabase";
 import { formatCurrencyBRL, formatDate, formatDateTime, formatKm, maskCnh, maskCpf, maskPhone, maskPlate } from "../lib/format";
 import type { Locacao, RentalStatus } from "../types/entities";
-import { CalendarDays, Car, CircleDollarSign, FileSearch, Printer, ReceiptText } from "lucide-react";
+import { CalendarDays, Car, CircleDollarSign, Printer, ReceiptText } from "lucide-react";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 type HistoryStatusFilter = "" | "finalizada" | "cancelada";
@@ -41,7 +41,7 @@ export const ReportsPage = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Locacao[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [summary, setSummary] = useState({ total: 0, totalReceived: 0, totalPlanned: 0, totalAdditional: 0, totalKm: 0, averageTicket: 0 });
+  const [summary, setSummary] = useState({ total: 0, totalReceived: 0, totalPlanned: 0, totalAdditional: 0, totalKm: 0 });
   const [filters, setFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Locacao | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,21 +105,23 @@ export const ReportsPage = () => {
     const totalPlanned = rows.reduce((acc, row) => acc + Number((row as Locacao).valor_previsto || (row as Locacao).valor_total || 0), 0);
     const totalAdditional = rows.reduce((acc, row) => acc + Number((row as Locacao).valor_adicional || 0), 0);
     const totalKm = rows.reduce((acc, row) => acc + toKmDriven(row), 0);
-    const averageTicket = total > 0 ? totalReceived / total : 0;
-    setSummary({ total, totalReceived, totalPlanned, totalAdditional, totalKm, averageTicket });
+    setSummary({ total, totalReceived, totalPlanned, totalAdditional, totalKm });
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadHistory(1);
     void loadSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedClient, debouncedVehicle, filters.startDate, filters.endDate, filters.status, filters.paymentMethod]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [filters]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadHistory(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
@@ -127,6 +129,7 @@ export const ReportsPage = () => {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
@@ -209,7 +212,7 @@ export const ReportsPage = () => {
         />
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         <Card className="min-h-[130px]">
           <div className="mb-3 flex items-start justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Locações finalizadas</p>
@@ -233,18 +236,11 @@ export const ReportsPage = () => {
           <p className="text-3xl font-bold tracking-tight text-slate-900">{formatCurrencyBRL(summaryCards.totalAdditional)}</p>
         </Card>
 
-        <Card className="min-h-[130px]">
-          <div className="mb-3 flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ticket médio</p>
-            <div className="rounded-xl bg-amber-50 p-2 text-amber-600 ring-1 ring-amber-100"><FileSearch size={16} /></div>
-          </div>
-          <p className="text-3xl font-bold tracking-tight text-slate-900">{formatCurrencyBRL(summaryCards.averageTicket)}</p>
-        </Card>
       </div>
 
-      <Card className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <div>
+      <Card className="space-y-4 p-4 sm:p-5">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+          <div className="xl:col-span-3">
             <Label>Buscar cliente</Label>
             <Input
               placeholder="Nome do cliente"
@@ -252,7 +248,7 @@ export const ReportsPage = () => {
               onChange={(e) => setFilters((prev) => ({ ...prev, client: e.target.value }))}
             />
           </div>
-          <div>
+          <div className="xl:col-span-3">
             <Label>Buscar veículo/placa</Label>
             <Input
               placeholder="Marca, modelo ou placa"
@@ -260,7 +256,7 @@ export const ReportsPage = () => {
               onChange={(e) => setFilters((prev) => ({ ...prev, vehicle: e.target.value }))}
             />
           </div>
-          <div>
+          <div className="xl:col-span-2">
             <Label>Período inicial</Label>
             <Input
               type="date"
@@ -268,7 +264,7 @@ export const ReportsPage = () => {
               onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
             />
           </div>
-          <div>
+          <div className="xl:col-span-2">
             <Label>Período final</Label>
             <Input
               type="date"
@@ -276,7 +272,7 @@ export const ReportsPage = () => {
               onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
             />
           </div>
-          <div>
+          <div className="xl:col-span-2">
             <Label>Status</Label>
             <Select
               value={filters.status}
@@ -289,8 +285,8 @@ export const ReportsPage = () => {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-          <div>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] xl:grid-cols-12">
+          <div className="xl:col-span-8">
             <Label>Forma de pagamento</Label>
             <Select
               value={filters.paymentMethod}
@@ -299,15 +295,15 @@ export const ReportsPage = () => {
               <option value="">Todas (não configurado)</option>
             </Select>
           </div>
-          <Button variant="outline" className="self-end" onClick={() => setFilters(DEFAULT_FILTERS)}>Limpar filtros</Button>
-          <Button className="self-end" onClick={exportCsv} disabled={!totalItems}>Exportar CSV</Button>
+          <Button variant="outline" className="w-full self-end md:w-auto xl:col-span-2 xl:w-full" onClick={() => setFilters(DEFAULT_FILTERS)}>Limpar filtros</Button>
+          <Button className="w-full self-end md:w-auto xl:col-span-2 xl:w-full" onClick={exportCsv} disabled={!totalItems}>Exportar CSV</Button>
         </div>
       </Card>
 
       <Card className="p-0">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-4 sm:px-5">
           <SectionTitle title="Fechamentos de locações" subtitle="Histórico completo com valores e quilometragem" />
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500 sm:text-sm">
             {totalItems} registro(s) • Página {currentPage} de {totalPages}
           </p>
         </div>
@@ -395,7 +391,7 @@ export const ReportsPage = () => {
 
             {totalItems > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
-                <p className="text-sm text-slate-500">
+                <p className="w-full text-xs text-slate-500 sm:w-auto sm:text-sm">
                   Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalItems)}-
                   {Math.min(currentPage * pageSize, totalItems)} de {totalItems}
                 </p>

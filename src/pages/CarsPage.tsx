@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Input, Label, Modal, Select, Badge, EmptyState } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import type { Carro, CarStatus, Locacao } from "../types/entities";
@@ -43,7 +43,7 @@ export const CarsPage = () => {
   const [form, setForm] = useState<CarForm>(initialForm);
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("carros").select("*").order("created_at", { ascending: false });
     if (status) query = query.eq("status", status);
@@ -52,11 +52,12 @@ export const CarsPage = () => {
     setLoading(false);
     if (error) return toast.error(error.message);
     setCars((data as Carro[]) || []);
-  };
+  }, [status, debouncedSearch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [debouncedSearch, status]);
+  }, [load]);
 
   const openNew = () => {
     setEditing(null);

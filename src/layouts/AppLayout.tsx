@@ -41,7 +41,7 @@ export const AppLayout = () => {
   return (
     <div className="flex min-h-screen bg-slate-100">
       {sidebarOpen && <button className="fixed inset-0 z-30 bg-slate-950/50 md:hidden" onClick={() => setSidebarOpen(false)} />}
-      <aside className={`no-print fixed z-40 h-screen w-[268px] overflow-y-auto border-r border-slate-700/50 bg-gradient-to-b from-[#0b1220] via-[#0f172a] to-[#131d33] p-5 text-slate-100 transition-transform md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`no-print fixed z-40 h-screen w-[86vw] max-w-[268px] overflow-y-auto border-r border-slate-700/50 bg-gradient-to-b from-[#0b1220] via-[#0f172a] to-[#131d33] p-4 text-slate-100 transition-transform md:static md:w-[268px] md:max-w-none md:translate-x-0 md:p-5 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="mb-7 rounded-2xl border border-slate-700/60 bg-slate-900/70 p-4">
           <div className="flex items-center gap-2">
             {logoUrl ? (
@@ -51,7 +51,7 @@ export const AppLayout = () => {
                 <Car size={16} />
               </div>
             )}
-            <h1 className="text-lg font-semibold tracking-tight">{nomeLocadora}</h1>
+            <h1 className="max-w-[180px] truncate text-lg font-semibold tracking-tight">{nomeLocadora}</h1>
           </div>
           <p className="mt-1 text-xs text-slate-400">Plataforma de gestão inteligente</p>
         </div>
@@ -78,34 +78,34 @@ export const AppLayout = () => {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 p-3 sm:p-5 md:p-7">
-        <header className="no-print mb-6 rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-[0_8px_20px_rgba(15,23,42,0.05)] sm:px-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      <main className="min-w-0 flex-1 p-2 sm:p-4 md:p-6">
+        <header className="no-print mb-4 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.05)] sm:mb-6 sm:px-5 sm:py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <Button variant="outline" className="md:hidden" onClick={() => setSidebarOpen((prev) => !prev)}>
                 {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
               </Button>
               <div>
-                <p className="text-sm text-slate-500">Painel administrativo</p>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">{pageTitle}</h2>
+                <p className="text-xs text-slate-500 sm:text-sm">Painel administrativo</p>
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{pageTitle}</h2>
               </div>
             </div>
-            <div className="flex w-full flex-wrap items-center justify-end gap-3 lg:w-auto">
-              <div className="relative order-3 w-full sm:order-none sm:w-72 lg:w-80">
+            <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:gap-3 lg:w-auto">
+              <div className="relative order-3 w-full sm:order-none sm:w-64 lg:w-72">
                 <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input className="pl-9" placeholder="Buscar no sistema..." />
+                <Input className="h-10 pl-9" placeholder="Buscar no sistema..." />
               </div>
               <button className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50">
                 <Bell size={17} />
               </button>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="max-w-44 truncate text-sm font-semibold text-slate-800">{userName}</p>
-                <p className="max-w-44 truncate text-xs text-slate-500">{userEmail}</p>
-              </div>
+              <div className="flex max-w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 sm:px-3">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden sm:block">
+                  <p className="max-w-40 truncate text-sm font-semibold text-slate-800">{userName}</p>
+                  <p className="max-w-40 truncate text-xs text-slate-500">{userEmail}</p>
+                </div>
               </div>
             </div>
           </div>

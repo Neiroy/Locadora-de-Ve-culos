@@ -82,7 +82,7 @@ export const Badge = ({ status }: { status: string }) => {
 };
 
 export const EmptyState = ({ message }: { message: string }) => (
-  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">{message}</div>
+  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center text-sm text-slate-500 sm:p-8">{message}</div>
 );
 
 export const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: string }) => (
@@ -95,11 +95,11 @@ export const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: st
 export const Modal = ({ open, title, onClose, children }: PropsWithChildren<{ open: boolean; title: string; onClose: () => void }>) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-          <Button variant="outline" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-slate-950/50 p-2 pt-4 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="max-h-[96vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl sm:max-h-[92vh] sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="text-base font-semibold text-slate-900 sm:text-lg">{title}</h3>
+          <Button variant="outline" className="h-9 px-3 sm:h-10 sm:px-4" onClick={onClose}>
             Fechar
           </Button>
         </div>

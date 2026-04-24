@@ -38,6 +38,19 @@ export const DashboardPage = () => {
     chart: [],
   });
 
+  const buildChartData = (rows: { created_at: string }[]) => {
+    const labels = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().slice(0, 10);
+    });
+
+    return labels.map((day) => ({
+      dia: day.slice(8, 10),
+      total: rows.filter((r) => r.created_at.slice(0, 10) === day).length,
+    }));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const [{ count: totalCarros }, { count: carrosDisponiveis }, { count: carrosAlugados }, { count: totalClientes }, { count: locacoesAbertas }, { count: locacoesFinalizadas }, { data: ultimasLocacoes }, { data: carrosRecentes }, { data: chartData }] =
@@ -74,19 +87,6 @@ export const DashboardPage = () => {
     fetchData();
   }, []);
 
-  const buildChartData = (rows: { created_at: string }[]) => {
-    const labels = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return d.toISOString().slice(0, 10);
-    });
-
-    return labels.map((day) => ({
-      dia: day.slice(8, 10),
-      total: rows.filter((r) => r.created_at.slice(0, 10) === day).length,
-    }));
-  };
-
   const cards = [
     { label: "Total de veículos", value: data.totalCarros, icon: Car },
     { label: "Disponíveis", value: data.carrosDisponiveis, icon: CheckCircle2 },
@@ -97,26 +97,26 @@ export const DashboardPage = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
         {cards.map((card) => (
-          <Card key={card.label} className="group min-h-[150px] transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
+          <Card key={card.label} className="group min-h-[132px] rounded-2xl p-4 sm:min-h-[150px] sm:p-5 transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
             <div className="mb-4 flex items-start justify-between">
-              <p className="text-sm font-medium text-slate-500">{card.label}</p>
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">{card.label}</p>
               <div className="rounded-xl bg-blue-50 p-2 text-blue-600 ring-1 ring-blue-100">
                 <card.icon size={18} />
               </div>
             </div>
-            <p className="text-4xl font-bold tracking-tight text-slate-900">{card.value}</p>
+            <p className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{card.value}</p>
             <p className="mt-2 text-xs text-slate-500">Atualizado em tempo real</p>
           </Card>
         ))}
       </div>
-      <div className="grid gap-5 xl:grid-cols-12">
+      <div className="grid gap-4 xl:grid-cols-12 xl:gap-5">
         <Card className="p-0 xl:col-span-8">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-4 sm:px-5">
             <SectionTitle title="Locações Recentes" subtitle="Acompanhamento das últimas operações" />
-            <Button variant="outline">Ver todas as locações</Button>
+            <Button variant="outline" className="w-full sm:w-auto lg:min-w-44">Ver todas as locações</Button>
           </div>
           <div className="space-y-3 p-4 md:hidden">
             {data.ultimasLocacoes.map((item) => (
@@ -162,14 +162,14 @@ export const DashboardPage = () => {
           {data.ultimasLocacoes.length === 0 && <EmptyState message="Nenhuma locação registrada até o momento." />}
         </Card>
 
-        <Card className="xl:col-span-4">
-          <div className="flex items-center justify-between">
+        <Card className="xl:col-span-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionTitle title="Locações (7 dias)" subtitle="Evolução diária" />
-            <Select className="h-9 max-w-36 text-xs">
+            <Select className="h-9 w-full text-xs sm:w-auto sm:max-w-36">
               <option>Últimos 7 dias</option>
             </Select>
           </div>
-          <div className="mt-4 h-64">
+          <div className="mt-4 h-52 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.chart}>
                 <defs>

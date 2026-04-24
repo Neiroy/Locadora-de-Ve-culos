@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Input, Label, Modal, Badge, EmptyState } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import type { Cliente, Locacao } from "../types/entities";
@@ -29,7 +29,7 @@ export const ClientsPage = () => {
   const [historyOwner, setHistoryOwner] = useState<Cliente | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("clientes").select("*").order("created_at", { ascending: false });
     if (debouncedSearch) query = query.or(`nome.ilike.%${debouncedSearch}%,cpf.ilike.%${onlyDigits(debouncedSearch)}%`);
@@ -37,11 +37,12 @@ export const ClientsPage = () => {
     setLoading(false);
     if (error) return toast.error(error.message);
     setItems((data as Cliente[]) || []);
-  };
+  }, [debouncedSearch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [debouncedSearch]);
+  }, [load]);
 
   const openForm = (cliente?: Cliente) => {
     setEditing(cliente || null);

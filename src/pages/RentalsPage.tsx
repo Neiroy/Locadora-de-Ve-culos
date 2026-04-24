@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Input, Label, Modal, Select, Badge, EmptyState } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import type { Carro, Cliente, Locacao, RentalStatus } from "../types/entities";
@@ -61,6 +61,7 @@ export const RentalsPage = () => {
 
   useEffect(() => {
     const diariasAuto = calculateRentalDays(newRental.data_retirada, newRental.data_prevista_devolucao);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewRental((prev) => ({ ...prev, quantidade_diarias: String(diariasAuto) }));
   }, [newRental.data_retirada, newRental.data_prevista_devolucao]);
 
@@ -70,6 +71,7 @@ export const RentalsPage = () => {
     if (Number.isNaN(retirada.getTime())) return;
     const previsao = new Date(retirada.getTime() + 24 * 60 * 60 * 1000);
     const localIso = new Date(previsao.getTime() - previsao.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewRental((prev) => ({ ...prev, data_prevista_devolucao: localIso }));
   }, [newRental.data_retirada, newRental.data_prevista_devolucao]);
 
@@ -82,7 +84,7 @@ export const RentalsPage = () => {
     setCarros((carrosData as Carro[]) || []);
   };
 
-  const loadLocacoes = async () => {
+  const loadLocacoes = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("locacoes").select("*,clientes(*),carros(*),profiles(nome,email)").order("created_at", { ascending: false });
     if (statusFilter) query = query.eq("status", statusFilter);
@@ -95,15 +97,17 @@ export const RentalsPage = () => {
       return item.clientes?.nome?.toLowerCase().includes(term) || item.carros?.placa?.toLowerCase().includes(term);
     });
     setLocacoes(rows);
-  };
+  }, [statusFilter, debouncedSearch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadBase();
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLocacoes();
-  }, [statusFilter, debouncedSearch]);
+  }, [loadLocacoes]);
 
   const createRental = async () => {
     const cliente = clientes.find((c) => c.id === newRental.cliente_id);
@@ -209,8 +213,8 @@ export const RentalsPage = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="mb-4 flex flex-wrap gap-2">
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap gap-2 sm:gap-3">
           <h2 className="mr-auto text-lg font-semibold text-slate-900">Locações</h2>
           <Input placeholder="Buscar por cliente ou placa" className="w-full sm:max-w-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select className="w-full sm:max-w-44" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -219,7 +223,7 @@ export const RentalsPage = () => {
             <option value="finalizada">Finalizada</option>
             <option value="cancelada">Cancelada</option>
           </Select>
-          <Button onClick={() => setOpenCreate(true)}>Nova locação</Button>
+          <Button className="w-full sm:w-auto" onClick={() => setOpenCreate(true)}>Nova locação</Button>
         </div>
         <div className="space-y-3 sm:hidden">
           {!loading && locacoes.map((item) => (
@@ -231,13 +235,13 @@ export const RentalsPage = () => {
                 <Badge status={item.status} />
                 <span className="text-sm font-medium text-slate-700">{formatCurrencyBRL(item.valor_total)}</span>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => setDetail(item)}>Detalhes</Button>
-                <Link to={`/contratos/${item.id}`}><Button variant="outline">Gerar Contrato</Button></Link>
+              <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
+                <Button className="w-full sm:w-auto" variant="outline" onClick={() => setDetail(item)}>Detalhes</Button>
+                <Link className="w-full sm:w-auto" to={`/contratos/${item.id}`}><Button className="w-full sm:w-auto" variant="outline">Gerar Contrato</Button></Link>
                 {item.status === "aberta" && (
                   <>
-                    <Button onClick={() => setOpenReturn(item)}>Finalizar</Button>
-                    <Button variant="danger" onClick={() => cancelRental(item)}>Cancelar</Button>
+                    <Button className="w-full sm:w-auto" onClick={() => setOpenReturn(item)}>Finalizar</Button>
+                    <Button className="w-full sm:w-auto" variant="danger" onClick={() => cancelRental(item)}>Cancelar</Button>
                   </>
                 )}
               </div>
@@ -304,12 +308,12 @@ export const RentalsPage = () => {
             <Input inputMode="numeric" value={newRental.quantidade_diarias} readOnly />
             <p className="mt-1 text-xs text-slate-500">Diárias calculadas automaticamente pelo período selecionado.</p>
           </div>
-          <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
             <div><Label>Observações adicionais do contrato (opcional)</Label><Input value={newRental.contrato_observacoes} onChange={(e) => setNewRental({ ...newRental, contrato_observacoes: e.target.value })} /></div>
             <div><Label>Testemunha 1 - Nome</Label><Input value={newRental.testemunha1_nome} onChange={(e) => setNewRental({ ...newRental, testemunha1_nome: e.target.value })} /></div>
-            <div><Label>Testemunha 1 - CPF</Label><Input value={newRental.testemunha1_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha1_cpf: e.target.value })} /></div>
+            <div><Label>Testemunha 1 - CPF</Label><Input value={newRental.testemunha1_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha1_cpf: maskCpf(e.target.value) })} /></div>
             <div><Label>Testemunha 2 - Nome</Label><Input value={newRental.testemunha2_nome} onChange={(e) => setNewRental({ ...newRental, testemunha2_nome: e.target.value })} /></div>
-            <div><Label>Testemunha 2 - CPF</Label><Input value={newRental.testemunha2_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha2_cpf: e.target.value })} /></div>
+            <div><Label>Testemunha 2 - CPF</Label><Input value={newRental.testemunha2_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha2_cpf: maskCpf(e.target.value) })} /></div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm md:col-span-2">
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -358,12 +362,12 @@ export const RentalsPage = () => {
             </div>
           </div>
         </div>
-        <div className="mt-4"><Button disabled={saving || !newRental.cliente_id || !newRental.carro_id || !newRental.data_retirada || !newRental.data_prevista_devolucao} onClick={createRental}>{saving ? "Salvando..." : "Gerar locação e contrato"}</Button></div>
+        <div className="mt-4"><Button className="w-full sm:w-auto" disabled={saving || !newRental.cliente_id || !newRental.carro_id || !newRental.data_retirada || !newRental.data_prevista_devolucao} onClick={createRental}>{saving ? "Salvando..." : "Gerar locação e contrato"}</Button></div>
       </Modal>
 
       <Modal open={!!openReturn} title="Finalizar devolução" onClose={() => setOpenReturn(null)}>
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-3 sm:p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumo da devolução</p>
               <p className="text-sm text-slate-700">Confira os dados antes de finalizar</p>
@@ -388,7 +392,7 @@ export const RentalsPage = () => {
               <p className="text-slate-600">Valor previsto: <strong>{formatCurrencyBRL(valorPrevistoLocacao)}</strong></p>
             </div>
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diárias contratadas</p>
               <p className="mt-1 font-semibold text-slate-800">{openReturn?.quantidade_diarias || 0}</p>
@@ -434,14 +438,14 @@ export const RentalsPage = () => {
           <div><Label>KM devolução</Label><Input inputMode="numeric" value={returnData.km_entrada} placeholder="Ex: 12.950" onChange={(e) => setReturnData({ ...returnData, km_entrada: maskKmInput(e.target.value) })} /></div>
           <div className="md:col-span-2"><Label>Observação</Label><Input value={returnData.observacoes_devolucao} onChange={(e) => setReturnData({ ...returnData, observacoes_devolucao: e.target.value })} /></div>
         </div>
-        <div className="mt-4"><Button disabled={returnDisabled} onClick={finishReturn}>{saving ? "Finalizando..." : "Finalizar devolução"}</Button></div>
+        <div className="mt-4"><Button className="w-full sm:w-auto" disabled={returnDisabled} onClick={finishReturn}>{saving ? "Finalizando..." : "Finalizar devolução"}</Button></div>
       </Modal>
 
       <Modal open={!!detail} title="Detalhes da locação" onClose={() => setDetail(null)}>
         {detail && (
           <div className="space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-3 sm:p-4 shadow-sm">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumo da locação</p>
                   <p className="text-sm text-slate-700">Informações detalhadas do contrato e operação</p>
@@ -487,7 +491,7 @@ export const RentalsPage = () => {
               </div>
             </div>
             <div>
-              <Link to={`/contratos/${detail.id}`}><Button>Visualizar e imprimir contrato</Button></Link>
+              <Link to={`/contratos/${detail.id}`}><Button className="w-full sm:w-auto">Visualizar e imprimir contrato</Button></Link>
             </div>
           </div>
         )}

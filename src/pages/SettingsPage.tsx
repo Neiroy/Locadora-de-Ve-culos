@@ -158,6 +158,7 @@ export const SettingsPage = () => {
 
   useEffect(() => {
     if (!isAdmin) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadSettings();
     void loadUsers();
   }, [isAdmin]);
@@ -278,7 +279,7 @@ export const SettingsPage = () => {
 
         <div className="grid gap-0 md:grid-cols-[230px_1fr]">
           <aside className="border-b border-slate-200 p-3 md:border-b-0 md:border-r">
-            <nav className="grid gap-1">
+            <nav className="grid gap-1 sm:grid-cols-2 md:grid-cols-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
@@ -294,7 +295,7 @@ export const SettingsPage = () => {
             </nav>
           </aside>
 
-          <section className="p-4 sm:p-5">
+          <section className="p-3 sm:p-5">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-slate-900">{tabTitle}</h3>
             </div>
@@ -304,23 +305,23 @@ export const SettingsPage = () => {
             ) : (
               <>
                 {activeTab === "geral" && (
-                  <Card className="space-y-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div><Label>Nome do sistema</Label><Input value={general.nomeSistema} onChange={(e) => setGeneral({ ...general, nomeSistema: e.target.value })} /></div>
-                      <div><Label>Moeda</Label><Select value={general.moeda} onChange={(e) => setGeneral({ ...general, moeda: e.target.value })}><option>BRL</option></Select></div>
-                      <div><Label>Formato de data</Label><Input value={general.formatoData} onChange={(e) => setGeneral({ ...general, formatoData: e.target.value })} /></div>
-                      <div><Label>Fuso horário</Label><Input value={general.fusoHorario} onChange={(e) => setGeneral({ ...general, fusoHorario: e.target.value })} /></div>
+                  <Card className="space-y-3 p-4 sm:p-5">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+                      <div className="xl:col-span-4"><Label>Nome do sistema</Label><Input value={general.nomeSistema} onChange={(e) => setGeneral({ ...general, nomeSistema: e.target.value })} /></div>
+                      <div className="xl:col-span-2"><Label>Moeda</Label><Select value={general.moeda} onChange={(e) => setGeneral({ ...general, moeda: e.target.value })}><option>BRL</option></Select></div>
+                      <div className="xl:col-span-3"><Label>Formato de data</Label><Input value={general.formatoData} onChange={(e) => setGeneral({ ...general, formatoData: e.target.value })} /></div>
+                      <div className="xl:col-span-3"><Label>Fuso horário</Label><Input value={general.fusoHorario} onChange={(e) => setGeneral({ ...general, fusoHorario: e.target.value })} /></div>
                     </div>
-                    <Button disabled={saving} onClick={() => saveSection("general_settings", general)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
+                    <Button className="w-full sm:w-auto" disabled={saving} onClick={() => saveSection("general_settings", general)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
                   </Card>
                 )}
 
                 {activeTab === "locadora" && (
-                  <Card className="space-y-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div><Label>Nome da locadora</Label><Input value={company.nomeLocadora} onChange={(e) => setCompany({ ...company, nomeLocadora: e.target.value })} /></div>
-                      <div><Label>Nome fantasia</Label><Input value={company.nomeFantasia} onChange={(e) => setCompany({ ...company, nomeFantasia: e.target.value })} /></div>
-                      <div>
+                  <Card className="space-y-3 p-4 sm:p-5">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+                      <div className="xl:col-span-4"><Label>Nome da locadora</Label><Input value={company.nomeLocadora} onChange={(e) => setCompany({ ...company, nomeLocadora: e.target.value })} /></div>
+                      <div className="xl:col-span-4"><Label>Nome fantasia</Label><Input value={company.nomeFantasia} onChange={(e) => setCompany({ ...company, nomeFantasia: e.target.value })} /></div>
+                      <div className="xl:col-span-4">
                         <Label>CPF/CNPJ</Label>
                         <Input
                           value={company.cpfCnpj}
@@ -328,7 +329,7 @@ export const SettingsPage = () => {
                           placeholder="000.000.000-00 ou 00.000.000/0000-00"
                         />
                       </div>
-                      <div>
+                      <div className="xl:col-span-4">
                         <Label>Telefone</Label>
                         <Input
                           value={company.telefone}
@@ -336,12 +337,12 @@ export const SettingsPage = () => {
                           placeholder="(00) 00000-0000"
                         />
                       </div>
-                      <div><Label>Email</Label><Input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} /></div>
-                      <div><Label>Endereço</Label><Input value={company.endereco} onChange={(e) => setCompany({ ...company, endereco: e.target.value })} /></div>
-                      <div><Label>Cidade</Label><Input value={company.cidade} onChange={(e) => setCompany({ ...company, cidade: e.target.value })} /></div>
-                      <div><Label>Estado</Label><Input value={company.estado} onChange={(e) => setCompany({ ...company, estado: e.target.value })} /></div>
-                      <div className="md:col-span-2"><Label>Logo (URL)</Label><Input value={company.logoUrl} onChange={(e) => setCompany({ ...company, logoUrl: e.target.value })} placeholder="https://..." /></div>
-                      <div className="md:col-span-2">
+                      <div className="xl:col-span-4"><Label>Email</Label><Input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} /></div>
+                      <div className="xl:col-span-5"><Label>Endereço</Label><Input value={company.endereco} onChange={(e) => setCompany({ ...company, endereco: e.target.value })} /></div>
+                      <div className="xl:col-span-2"><Label>Cidade</Label><Input value={company.cidade} onChange={(e) => setCompany({ ...company, cidade: e.target.value })} /></div>
+                      <div className="xl:col-span-1"><Label>Estado</Label><Input value={company.estado} onChange={(e) => setCompany({ ...company, estado: e.target.value })} /></div>
+                      <div className="md:col-span-2 xl:col-span-8"><Label>Logo (URL)</Label><Input value={company.logoUrl} onChange={(e) => setCompany({ ...company, logoUrl: e.target.value })} placeholder="https://..." /></div>
+                      <div className="md:col-span-2 xl:col-span-4">
                         <Label>Upload de logo</Label>
                         <Input type="file" accept="image/*" onChange={onLogoUpload} />
                         <p className="mt-1 text-xs text-slate-500">A imagem é enviada para o Supabase Storage (bucket `branding`). Depois clique em salvar alterações.</p>
@@ -349,33 +350,33 @@ export const SettingsPage = () => {
                     </div>
                     {logoUploading && <p className="text-sm text-slate-500">Carregando logo...</p>}
                     {company.logoUrl && <img src={company.logoUrl} alt="Logo da locadora" className="h-20 rounded-lg border border-slate-200 object-contain p-2" />}
-                    <Button disabled={saving} onClick={() => saveSection("company_settings", company)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
+                    <Button className="w-full sm:w-auto" disabled={saving} onClick={() => saveSection("company_settings", company)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
                   </Card>
                 )}
 
                 {activeTab === "contrato" && (
-                  <Card className="space-y-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div><Label>Nome exibido no contrato</Label><Input value={contract.nomeExibido} onChange={(e) => setContract({ ...contract, nomeExibido: e.target.value })} /></div>
-                      <div><Label>Cidade no contrato</Label><Input value={contract.cidadeContrato} onChange={(e) => setContract({ ...contract, cidadeContrato: e.target.value })} /></div>
+                  <Card className="space-y-3 p-4 sm:p-5">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+                      <div className="xl:col-span-6"><Label>Nome exibido no contrato</Label><Input value={contract.nomeExibido} onChange={(e) => setContract({ ...contract, nomeExibido: e.target.value })} /></div>
+                      <div className="xl:col-span-6"><Label>Cidade no contrato</Label><Input value={contract.cidadeContrato} onChange={(e) => setContract({ ...contract, cidadeContrato: e.target.value })} /></div>
                       <div className="md:col-span-2"><Label>Texto padrão do contrato</Label><textarea className="min-h-32 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={contract.textoPadrao} onChange={(e) => setContract({ ...contract, textoPadrao: e.target.value })} /></div>
                       <div className="md:col-span-2"><Label>Observações padrão</Label><textarea className="min-h-24 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={contract.observacoesPadrao} onChange={(e) => setContract({ ...contract, observacoesPadrao: e.target.value })} /></div>
-                      <div><Label>Rodapé</Label><Input value={contract.rodape} onChange={(e) => setContract({ ...contract, rodape: e.target.value })} /></div>
-                      <div><Label>Assinatura da empresa</Label><Input value={contract.assinaturaEmpresa} onChange={(e) => setContract({ ...contract, assinaturaEmpresa: e.target.value })} /></div>
+                      <div className="xl:col-span-7"><Label>Rodapé</Label><Input value={contract.rodape} onChange={(e) => setContract({ ...contract, rodape: e.target.value })} /></div>
+                      <div className="xl:col-span-5"><Label>Assinatura da empresa</Label><Input value={contract.assinaturaEmpresa} onChange={(e) => setContract({ ...contract, assinaturaEmpresa: e.target.value })} /></div>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Habilitar impressão <input type="checkbox" checked={contract.habilitarImpressao} onChange={(e) => setContract({ ...contract, habilitarImpressao: e.target.checked })} /></label>
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Habilitar baixar PDF <input type="checkbox" checked={contract.habilitarPdf} onChange={(e) => setContract({ ...contract, habilitarPdf: e.target.checked })} /></label>
                     </div>
-                    <Button disabled={saving} onClick={() => saveSection("contract_settings", contract)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
+                    <Button className="w-full sm:w-auto" disabled={saving} onClick={() => saveSection("contract_settings", contract)}>{saving ? "Salvando..." : "Salvar alterações"}</Button>
                   </Card>
                 )}
 
                 {activeTab === "locacao" && (
-                  <Card className="space-y-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div><Label>Hora limite devolução</Label><Input type="time" value={rental.horaLimiteDevolucao} onChange={(e) => setRental({ ...rental, horaLimiteDevolucao: e.target.value })} /></div>
-                      <div>
+                  <Card className="space-y-3 p-4 sm:p-5">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+                      <div className="xl:col-span-3"><Label>Hora limite devolução</Label><Input type="time" value={rental.horaLimiteDevolucao} onChange={(e) => setRental({ ...rental, horaLimiteDevolucao: e.target.value })} /></div>
+                      <div className="xl:col-span-4">
                         <Label>KM livre (opcional)</Label>
                         <Input
                           value={rental.kmLivre}
@@ -383,7 +384,7 @@ export const SettingsPage = () => {
                           onChange={(e) => setRental({ ...rental, kmLivre: maskKmInput(e.target.value) })}
                         />
                       </div>
-                      <div>
+                      <div className="xl:col-span-5">
                         <Label>Valor por KM excedente</Label>
                         <div className="relative">
                           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">R$</span>
@@ -403,6 +404,7 @@ export const SettingsPage = () => {
                       <label className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm">Permitir edição finalizada <input type="checkbox" checked={rental.permitirEdicaoFinalizada} onChange={(e) => setRental({ ...rental, permitirEdicaoFinalizada: e.target.checked })} /></label>
                     </div>
                     <Button
+                      className="w-full sm:w-auto"
                       disabled={saving}
                       onClick={() =>
                         saveSection("rental_settings", {
@@ -419,10 +421,10 @@ export const SettingsPage = () => {
                 )}
 
                 {activeTab === "usuarios" && (
-                  <Card className="space-y-3">
-                    <div className="flex items-center justify-between">
+                  <Card className="space-y-3 p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <SectionTitle title="Usuários do sistema" subtitle="Gerencie perfil e status de acesso" />
-                      <Button variant="outline" disabled title="Criação via painel Auth do Supabase">
+                      <Button className="w-full sm:w-auto" variant="outline" disabled title="Criação via painel Auth do Supabase">
                         Novo usuário desativado
                       </Button>
                     </div>
@@ -438,7 +440,7 @@ export const SettingsPage = () => {
                               <td className="px-3 py-2">{u.email}</td>
                               <td className="px-3 py-2">{u.role}</td>
                               <td className="px-3 py-2">{u.status || "ativo"}</td>
-                              <td className="px-3 py-2 text-right"><Button variant="outline" onClick={() => openUserModal(u)}>Editar</Button></td>
+                              <td className="px-3 py-2 text-right"><Button className="w-full sm:w-auto" variant="outline" onClick={() => openUserModal(u)}>Editar</Button></td>
                             </tr>
                           ))}
                         </tbody>
@@ -449,13 +451,13 @@ export const SettingsPage = () => {
 
                 {activeTab === "seguranca" && (
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="space-y-3">
+                    <Card className="space-y-3 p-4 sm:p-5">
                       <SectionTitle title="Alterar senha" subtitle="Atualize sua senha de acesso" />
                       <div><Label>Nova senha</Label><Input type="password" value={securityForm.novaSenha} onChange={(e) => setSecurityForm({ ...securityForm, novaSenha: e.target.value })} /></div>
                       <div><Label>Confirmar nova senha</Label><Input type="password" value={securityForm.confirmarSenha} onChange={(e) => setSecurityForm({ ...securityForm, confirmarSenha: e.target.value })} /></div>
-                      <Button onClick={changePassword}>Salvar nova senha</Button>
+                      <Button className="w-full sm:w-auto" onClick={changePassword}>Salvar nova senha</Button>
                     </Card>
-                    <Card>
+                    <Card className="p-4 sm:p-5">
                       <SectionTitle title="Informações de segurança" subtitle="Boas práticas para proteger o acesso" />
                       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">
                         <li>Último acesso: {profile?.updated_at || profile?.created_at || "-"}</li>
@@ -479,7 +481,7 @@ export const SettingsPage = () => {
           <div><Label>Status</Label><Select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value as "ativo" | "inativo" })}><option value="ativo">Ativo</option><option value="inativo">Inativo</option></Select></div>
           {!editingUser && <div><Label>Senha inicial</Label><Input type="password" disabled value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} /></div>}
         </div>
-        <div className="mt-4"><Button onClick={saveUser}>{editingUser ? "Salvar usuário" : "Criar usuário"}</Button></div>
+        <div className="mt-4"><Button className="w-full sm:w-auto" onClick={saveUser}>{editingUser ? "Salvar usuário" : "Criar usuário"}</Button></div>
       </Modal>
     </div>
   );

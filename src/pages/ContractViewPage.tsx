@@ -116,22 +116,22 @@ export const ContractViewPage = () => {
 
   return (
     <div className="space-y-4">
-      <Card className="no-print">
+      <Card className="no-print p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Contrato de locação</p>
             <h2 className="text-xl font-bold text-slate-900">Visualização do Contrato</h2>
             <p className="text-sm text-slate-500">Documento oficial da locadora pronto para leitura e impressão.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={15} className="mr-1" /> Voltar</Button>
-            <Button variant="outline" onClick={() => window.print()}><FileDown size={15} className="mr-1" /> Baixar PDF</Button>
-            <Button variant="secondary" onClick={() => window.print()}><Printer size={15} className="mr-1" /> Imprimir</Button>
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={15} className="mr-1" /> Voltar</Button>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => window.print()}><FileDown size={15} className="mr-1" /> Baixar PDF</Button>
+            <Button className="w-full sm:w-auto" variant="secondary" onClick={() => window.print()}><Printer size={15} className="mr-1" /> Imprimir</Button>
           </div>
         </div>
       </Card>
 
-      <Card className="print-container border-slate-300 bg-slate-50/50 p-6 md:p-8">
+      <Card className="print-container border-slate-300 bg-slate-50/50 p-3 sm:p-6 md:p-8">
         <div className="contract-doc-shell mx-auto max-w-[900px]">
           {loading ? (
             <p className="text-sm text-slate-500">Carregando contrato...</p>
