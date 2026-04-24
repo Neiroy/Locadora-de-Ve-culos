@@ -47,8 +47,12 @@ create table if not exists public.clientes (
   cpf text not null unique,
   cnh text not null unique,
   telefone text,
+  endereco text,
   created_at timestamptz not null default now()
 );
+
+alter table public.clientes
+  add column if not exists endereco text;
 
 create table if not exists public.carros (
   id uuid primary key default gen_random_uuid(),
@@ -74,12 +78,25 @@ create table if not exists public.locacoes (
   data_devolucao_real timestamptz,
   quantidade_diarias integer not null check (quantidade_diarias > 0),
   valor_diaria numeric not null check (valor_diaria > 0),
+  valor_previsto numeric not null default 0 check (valor_previsto >= 0),
+  valor_adicional numeric not null default 0 check (valor_adicional >= 0),
+  valor_final numeric not null default 0 check (valor_final >= 0),
   valor_total numeric not null check (valor_total >= 0),
+  dias_extras integer not null default 0 check (dias_extras >= 0),
+  horas_atraso numeric not null default 0 check (horas_atraso >= 0),
   km_saida numeric not null check (km_saida >= 0),
   km_entrada numeric,
+  km_devolucao numeric,
   km_rodado numeric,
+  km_rodado_real numeric,
   status text not null default 'aberta' check (status in ('aberta', 'finalizada', 'cancelada')),
   observacoes_devolucao text,
+  observacao_devolucao text,
+  contrato_observacoes text,
+  testemunha1_nome text,
+  testemunha1_cpf text,
+  testemunha2_nome text,
+  testemunha2_cpf text,
   contrato_html text,
   created_at timestamptz not null default now(),
   constraint chk_locacao_datas check (data_prevista_devolucao >= data_retirada),
@@ -89,6 +106,20 @@ create table if not exists public.locacoes (
     or (status = 'finalizada' and data_devolucao_real is not null and km_entrada is not null)
   )
 );
+
+alter table public.locacoes add column if not exists valor_previsto numeric not null default 0;
+alter table public.locacoes add column if not exists valor_adicional numeric not null default 0;
+alter table public.locacoes add column if not exists valor_final numeric not null default 0;
+alter table public.locacoes add column if not exists dias_extras integer not null default 0;
+alter table public.locacoes add column if not exists horas_atraso numeric not null default 0;
+alter table public.locacoes add column if not exists km_devolucao numeric;
+alter table public.locacoes add column if not exists km_rodado_real numeric;
+alter table public.locacoes add column if not exists observacao_devolucao text;
+alter table public.locacoes add column if not exists contrato_observacoes text;
+alter table public.locacoes add column if not exists testemunha1_nome text;
+alter table public.locacoes add column if not exists testemunha1_cpf text;
+alter table public.locacoes add column if not exists testemunha2_nome text;
+alter table public.locacoes add column if not exists testemunha2_cpf text;
 
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
@@ -188,7 +219,12 @@ begin
 
   new.km_saida := v_km;
   new.valor_diaria := v_valor_diaria;
-  new.valor_total := new.quantidade_diarias * v_valor_diaria;
+  new.valor_previsto := new.quantidade_diarias * v_valor_diaria;
+  new.valor_adicional := 0;
+  new.dias_extras := 0;
+  new.horas_atraso := 0;
+  new.valor_final := new.valor_previsto;
+  new.valor_total := new.valor_previsto;
 
   if new.data_prevista_devolucao < new.data_retirada then
     raise exception 'Data prevista de devolucao nao pode ser menor que retirada';
@@ -214,8 +250,18 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_horas_atraso numeric;
+  v_dias_extras integer;
+  v_valor_previsto numeric;
+  v_valor_adicional numeric;
+  v_valor_final numeric;
 begin
   if new.status = 'finalizada' and old.status <> 'finalizada' then
+    if new.data_devolucao_real is null then
+      new.data_devolucao_real := now();
+    end if;
+
     if new.km_entrada is null then
       raise exception 'Informe o KM de devolucao';
     end if;
@@ -224,7 +270,30 @@ begin
       raise exception 'KM de devolucao nao pode ser menor que o KM de saida';
     end if;
 
+    v_horas_atraso := greatest(
+      extract(epoch from (new.data_devolucao_real - old.data_prevista_devolucao)) / 3600.0,
+      0
+    );
+    v_dias_extras := case
+      when v_horas_atraso <= 2 then 0
+      else ceil(v_horas_atraso / 24.0)::integer
+    end;
+
+    v_valor_previsto := coalesce(old.valor_previsto, old.valor_total, old.quantidade_diarias * old.valor_diaria);
+    v_valor_adicional := v_dias_extras * old.valor_diaria;
+    v_valor_final := v_valor_previsto + v_valor_adicional;
+
+    new.horas_atraso := round(v_horas_atraso, 2);
+    new.dias_extras := v_dias_extras;
+    new.valor_previsto := v_valor_previsto;
+    new.valor_adicional := v_valor_adicional;
+    new.valor_final := v_valor_final;
+    new.valor_total := v_valor_final;
+    new.km_devolucao := new.km_entrada;
     new.km_rodado := new.km_entrada - old.km_saida;
+    new.km_rodado_real := new.km_entrada - old.km_saida;
+    new.observacao_devolucao := coalesce(new.observacao_devolucao, new.observacoes_devolucao);
+    new.observacoes_devolucao := coalesce(new.observacoes_devolucao, new.observacao_devolucao);
 
     update public.carros
     set
@@ -234,6 +303,11 @@ begin
   end if;
 
   if new.status = 'cancelada' and old.status = 'aberta' then
+    new.horas_atraso := 0;
+    new.dias_extras := 0;
+    new.valor_adicional := 0;
+    new.valor_final := coalesce(old.valor_previsto, old.valor_total);
+    new.valor_total := new.valor_final;
     update public.carros
     set status = 'disponivel'
     where id = old.carro_id;

@@ -7,7 +7,7 @@ import { maskCnh, maskCpf, maskPhone, maskPlate, onlyDigits, formatDate } from "
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
-const initial = { nome: "", cpf: "", cnh: "", telefone: "" };
+const initial = { nome: "", cpf: "", cnh: "", telefone: "", endereco: "" };
 const normalizePersonName = (value: string) =>
   value
     .trim()
@@ -45,12 +45,22 @@ export const ClientsPage = () => {
 
   const openForm = (cliente?: Cliente) => {
     setEditing(cliente || null);
-    setForm(cliente ? { nome: cliente.nome, cpf: maskCpf(cliente.cpf), cnh: maskCnh(cliente.cnh), telefone: cliente.telefone || "" } : initial);
+    setForm(
+      cliente
+        ? { nome: cliente.nome, cpf: maskCpf(cliente.cpf), cnh: maskCnh(cliente.cnh), telefone: cliente.telefone || "", endereco: cliente.endereco || "" }
+        : initial,
+    );
     setOpen(true);
   };
 
   const save = async () => {
-    const payload = { ...form, nome: normalizePersonName(form.nome), cpf: onlyDigits(form.cpf), telefone: onlyDigits(form.telefone) || null };
+    const payload = {
+      ...form,
+      nome: normalizePersonName(form.nome),
+      cpf: onlyDigits(form.cpf),
+      telefone: onlyDigits(form.telefone) || null,
+      endereco: form.endereco.trim() || null,
+    };
     if (!payload.nome || !payload.cnh) return toast.error("Nome e CNH são obrigatórios.");
     if (!isValidCPF(payload.cpf)) return toast.error("CPF inválido");
     if (payload.cnh.length < 11) return toast.error("CNH inválida");
@@ -102,6 +112,7 @@ export const ClientsPage = () => {
               <p className="text-sm text-slate-500">{maskCpf(item.cpf)}</p>
               <p className="text-sm text-slate-500">CNH: {maskCnh(item.cnh)}</p>
               <p className="text-sm text-slate-500">Telefone: {item.telefone ? maskPhone(item.telefone) : "-"}</p>
+              <p className="text-sm text-slate-500">Endereço: {item.endereco || "-"}</p>
               <div className="mt-3 flex gap-2">
                 <Button variant="outline" onClick={() => openForm(item)}>Editar</Button>
                 <Button variant="outline" onClick={() => showHistory(item)}>Histórico</Button>
@@ -156,6 +167,7 @@ export const ClientsPage = () => {
           <div><Label>CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: maskCpf(e.target.value) })} /></div>
           <div><Label>CNH</Label><Input value={form.cnh} placeholder="Somente números" onChange={(e) => setForm({ ...form, cnh: maskCnh(e.target.value) })} /></div>
           <div className="md:col-span-2"><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: maskPhone(e.target.value) })} /></div>
+          <div className="md:col-span-2"><Label>Endereço</Label><Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} /></div>
         </div>
         <div className="mt-4"><Button disabled={saving} onClick={save}>{saving ? "Salvando..." : "Salvar"}</Button></div>
       </Modal>

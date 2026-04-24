@@ -18,6 +18,7 @@ export interface Cliente {
   cpf: string;
   cnh: string;
   telefone: string | null;
+  endereco?: string | null;
   created_at: string;
 }
 
@@ -45,15 +46,28 @@ export interface Locacao {
   data_devolucao_real: string | null;
   quantidade_diarias: number;
   valor_diaria: number;
+  valor_previsto?: number;
+  valor_adicional?: number;
+  valor_final?: number;
   valor_total: number;
+  dias_extras?: number;
+  horas_atraso?: number;
   km_saida: number;
   km_entrada: number | null;
+  km_devolucao?: number | null;
   km_rodado: number | null;
+  km_rodado_real?: number | null;
   status: RentalStatus;
   observacoes_devolucao: string | null;
+  observacao_devolucao?: string | null;
+  contrato_observacoes?: string | null;
+  testemunha1_nome?: string | null;
+  testemunha1_cpf?: string | null;
+  testemunha2_nome?: string | null;
+  testemunha2_cpf?: string | null;
   contrato_html: string | null;
   created_at: string;
-  clientes?: Pick<Cliente, "id" | "nome" | "cpf" | "cnh" | "telefone">;
+  clientes?: Pick<Cliente, "id" | "nome" | "cpf" | "cnh" | "telefone" | "endereco">;
   carros?: Pick<Carro, "id" | "marca" | "modelo" | "placa" | "ano" | "cor" | "km_atual">;
   profiles?: Pick<Profile, "id" | "nome" | "email">;
 }

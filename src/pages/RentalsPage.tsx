@@ -2,19 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Button, Card, Input, Label, Modal, Select, Badge, EmptyState } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import type { Carro, Cliente, Locacao, RentalStatus } from "../types/entities";
-import { buildContractHtml } from "../lib/contract";
 import { formatCurrencyBRL, formatDate, formatDateTime, formatKm, maskCnh, maskCpf, maskKmInput, maskPhone, maskPlate, unmaskKmInput } from "../lib/format";
 import { useAuth } from "../hooks/useAuth";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
-import { calculateKmDriven, calculateRentalDays, calculateRentalTotal } from "../lib/rental";
-import { useBranding } from "../hooks/useBranding";
+import { Link, useNavigate } from "react-router-dom";
+import { calculateKmDriven, calculateRentalDays, calculateRentalTotal, calculateReturnPricing } from "../lib/rental";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { DateTimePicker } from "../components/DateTimePicker";
 
 export const RentalsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { nomeLocadora, logoUrl } = useBranding();
   const [locacoes, setLocacoes] = useState<Locacao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carros, setCarros] = useState<Carro[]>([]);
@@ -26,7 +24,18 @@ export const RentalsPage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [newRental, setNewRental] = useState({ cliente_id: "", carro_id: "", data_retirada: "", data_prevista_devolucao: "", quantidade_diarias: "1" });
+  const [newRental, setNewRental] = useState({
+    cliente_id: "",
+    carro_id: "",
+    data_retirada: "",
+    data_prevista_devolucao: "",
+    quantidade_diarias: "1",
+    contrato_observacoes: "",
+    testemunha1_nome: "",
+    testemunha1_cpf: "",
+    testemunha2_nome: "",
+    testemunha2_cpf: "",
+  });
   const [returnData, setReturnData] = useState({ data_devolucao_real: "", km_entrada: "", observacoes_devolucao: "" });
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -36,6 +45,18 @@ export const RentalsPage = () => {
   const totalPreview = calculateRentalTotal(diarias, Number(carroSelecionado?.valor_diaria || 0));
   const kmEntradaPreview = unmaskKmInput(returnData.km_entrada);
   const kmRodadoPreview = openReturn ? calculateKmDriven(openReturn.km_saida, kmEntradaPreview) : 0;
+  const valorPrevistoLocacao = openReturn ? Number(openReturn.valor_previsto ?? openReturn.valor_total ?? 0) : 0;
+  const dataDevolucaoRealPreview = returnData.data_devolucao_real || new Date().toISOString();
+  const pricingPreview = useMemo(
+    () =>
+      calculateReturnPricing({
+        dataPrevistaDevolucao: openReturn?.data_prevista_devolucao,
+        dataDevolucaoReal: dataDevolucaoRealPreview,
+        valorDiaria: Number(openReturn?.valor_diaria || 0),
+        valorPrevisto: valorPrevistoLocacao,
+      }),
+    [openReturn?.data_prevista_devolucao, openReturn?.valor_diaria, dataDevolucaoRealPreview, valorPrevistoLocacao],
+  );
   const returnDisabled = saving || !openReturn || !returnData.km_entrada.trim() || kmEntradaPreview < (openReturn?.km_saida || 0);
 
   useEffect(() => {
@@ -93,42 +114,53 @@ export const RentalsPage = () => {
     if (new Date(newRental.data_prevista_devolucao) < new Date(newRental.data_retirada)) return toast.error("Data prevista não pode ser menor que retirada");
     if (diarias < 1) return toast.error("A quantidade de diárias deve ser maior que zero.");
 
-    const contrato = buildContractHtml({
-      cliente,
-      carro,
-      kmSaida: carro.km_atual,
-      dataRetirada: newRental.data_retirada,
-      dataPrevistaDevolucao: newRental.data_prevista_devolucao,
-      quantidadeDiarias: diarias,
-      valorDiaria: carro.valor_diaria,
-      valorTotal: totalPreview,
-      locadoraNome: nomeLocadora,
-      logoUrl,
-      contratoCodigo: `CTR-${Date.now().toString().slice(-8)}`,
-      statusLocacao: "aberta",
-    });
-
     setSaving(true);
-    const { error } = await supabase.from("locacoes").insert({
-      cliente_id: newRental.cliente_id,
-      carro_id: newRental.carro_id,
-      usuario_id: user?.id || null,
-      data_retirada: newRental.data_retirada,
-      data_prevista_devolucao: newRental.data_prevista_devolucao,
-      quantidade_diarias: diarias,
-      valor_diaria: carro.valor_diaria,
-      valor_total: totalPreview,
-      km_saida: carro.km_atual,
-      contrato_html: contrato,
-      status: "aberta",
-    });
+    const { data: created, error } = await supabase
+      .from("locacoes")
+      .insert({
+        cliente_id: newRental.cliente_id,
+        carro_id: newRental.carro_id,
+        usuario_id: user?.id || null,
+        data_retirada: newRental.data_retirada,
+        data_prevista_devolucao: newRental.data_prevista_devolucao,
+        quantidade_diarias: diarias,
+        valor_diaria: carro.valor_diaria,
+        valor_previsto: totalPreview,
+        valor_final: totalPreview,
+        valor_adicional: 0,
+        dias_extras: 0,
+        horas_atraso: 0,
+        valor_total: totalPreview,
+        km_saida: carro.km_atual,
+        contrato_html: null,
+        contrato_observacoes: newRental.contrato_observacoes || null,
+        testemunha1_nome: newRental.testemunha1_nome || null,
+        testemunha1_cpf: newRental.testemunha1_cpf || null,
+        testemunha2_nome: newRental.testemunha2_nome || null,
+        testemunha2_cpf: newRental.testemunha2_cpf || null,
+        status: "aberta",
+      })
+      .select("id")
+      .single();
     setSaving(false);
     if (error) return toast.error(error.message.includes("nao esta disponivel") ? "Este veículo não está disponível para locação." : error.message);
     toast.success("Locação realizada com sucesso");
     setOpenCreate(false);
-    setNewRental({ cliente_id: "", carro_id: "", data_retirada: "", data_prevista_devolucao: "", quantidade_diarias: "1" });
+    setNewRental({
+      cliente_id: "",
+      carro_id: "",
+      data_retirada: "",
+      data_prevista_devolucao: "",
+      quantidade_diarias: "1",
+      contrato_observacoes: "",
+      testemunha1_nome: "",
+      testemunha1_cpf: "",
+      testemunha2_nome: "",
+      testemunha2_cpf: "",
+    });
     loadBase();
     loadLocacoes();
+    if (created?.id) navigate(`/contratos/${created.id}`);
   };
 
   const finishReturn = async () => {
@@ -142,10 +174,19 @@ export const RentalsPage = () => {
       .from("locacoes")
       .update({
         status: "finalizada",
-        data_devolucao_real: returnData.data_devolucao_real || new Date().toISOString(),
+        data_devolucao_real: dataDevolucaoRealPreview,
         km_entrada: kmEntrada,
+        km_devolucao: kmEntrada,
         km_rodado: calculateKmDriven(openReturn.km_saida, kmEntrada),
+        km_rodado_real: calculateKmDriven(openReturn.km_saida, kmEntrada),
+        dias_extras: pricingPreview.diasExtras,
+        horas_atraso: pricingPreview.horasAtraso,
+        valor_previsto: valorPrevistoLocacao,
+        valor_adicional: pricingPreview.valorAdicional,
+        valor_final: pricingPreview.valorFinal,
+        valor_total: pricingPreview.valorFinal,
         observacoes_devolucao: returnData.observacoes_devolucao || null,
+        observacao_devolucao: returnData.observacoes_devolucao || null,
       })
       .eq("id", openReturn.id);
     setSaving(false);
@@ -192,7 +233,7 @@ export const RentalsPage = () => {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => setDetail(item)}>Detalhes</Button>
-                <Link to={`/contratos/${item.id}`}><Button variant="outline">Contrato</Button></Link>
+                <Link to={`/contratos/${item.id}`}><Button variant="outline">Gerar Contrato</Button></Link>
                 {item.status === "aberta" && (
                   <>
                     <Button onClick={() => setOpenReturn(item)}>Finalizar</Button>
@@ -219,7 +260,7 @@ export const RentalsPage = () => {
                   <td className="px-4 py-3"><Badge status={item.status} /></td>
                   <td className="space-x-2 px-4 py-3 text-right">
                     <Button variant="outline" onClick={() => setDetail(item)}>Detalhes</Button>
-                    <Link to={`/contratos/${item.id}`}><Button variant="outline">Contrato</Button></Link>
+                    <Link to={`/contratos/${item.id}`}><Button variant="outline">Gerar Contrato</Button></Link>
                     {item.status === "aberta" && (
                       <>
                         <Button onClick={() => setOpenReturn(item)}>Finalizar</Button>
@@ -262,6 +303,13 @@ export const RentalsPage = () => {
             <Label>Quantidade diárias (automático)</Label>
             <Input inputMode="numeric" value={newRental.quantidade_diarias} readOnly />
             <p className="mt-1 text-xs text-slate-500">Diárias calculadas automaticamente pelo período selecionado.</p>
+          </div>
+          <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+            <div><Label>Observações adicionais do contrato (opcional)</Label><Input value={newRental.contrato_observacoes} onChange={(e) => setNewRental({ ...newRental, contrato_observacoes: e.target.value })} /></div>
+            <div><Label>Testemunha 1 - Nome</Label><Input value={newRental.testemunha1_nome} onChange={(e) => setNewRental({ ...newRental, testemunha1_nome: e.target.value })} /></div>
+            <div><Label>Testemunha 1 - CPF</Label><Input value={newRental.testemunha1_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha1_cpf: e.target.value })} /></div>
+            <div><Label>Testemunha 2 - Nome</Label><Input value={newRental.testemunha2_nome} onChange={(e) => setNewRental({ ...newRental, testemunha2_nome: e.target.value })} /></div>
+            <div><Label>Testemunha 2 - CPF</Label><Input value={newRental.testemunha2_cpf} onChange={(e) => setNewRental({ ...newRental, testemunha2_cpf: e.target.value })} /></div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm md:col-span-2">
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -337,9 +385,46 @@ export const RentalsPage = () => {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valores e KM</p>
               <p className="mt-1 text-slate-600">KM saída: <strong>{formatKm(openReturn?.km_saida)}</strong></p>
               <p className="text-slate-600">KM rodado (prévia): <strong>{formatKm(kmRodadoPreview)}</strong></p>
-              <p className="text-slate-600">Valor total: <strong>{formatCurrencyBRL(openReturn?.valor_total || 0)}</strong></p>
+              <p className="text-slate-600">Valor previsto: <strong>{formatCurrencyBRL(valorPrevistoLocacao)}</strong></p>
             </div>
           </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diárias contratadas</p>
+              <p className="mt-1 font-semibold text-slate-800">{openReturn?.quantidade_diarias || 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diárias extras</p>
+              <p className="mt-1 font-semibold text-slate-800">{pricingPreview.diasExtras}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Horas de atraso</p>
+              <p className="mt-1 font-semibold text-slate-800">{pricingPreview.horasAtraso.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor da diária</p>
+              <p className="mt-1 font-semibold text-slate-800">{formatCurrencyBRL(openReturn?.valor_diaria || 0)}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor adicional</p>
+              <p className="mt-1 font-semibold text-slate-800">{formatCurrencyBRL(pricingPreview.valorAdicional)}</p>
+            </div>
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Valor final</p>
+              <p className="mt-1 text-lg font-bold text-blue-900">{formatCurrencyBRL(pricingPreview.valorFinal)}</p>
+            </div>
+          </div>
+          <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm">
+            <p className="text-slate-600">Data prevista: <strong>{formatDateTime(openReturn?.data_prevista_devolucao)}</strong></p>
+            <p className="text-slate-600">Data real (prévia): <strong>{formatDateTime(dataDevolucaoRealPreview)}</strong></p>
+            <p className="text-slate-600">Diferença a cobrar: <strong>{formatCurrencyBRL(pricingPreview.diferencaACobrar)}</strong></p>
+          </div>
+          {pricingPreview.diasExtras > 0 && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              Cliente permaneceu com o veículo por mais <strong>{pricingPreview.diasExtras}</strong> dia(s). Valor adicional a cobrar:{" "}
+              <strong>{formatCurrencyBRL(pricingPreview.valorAdicional)}</strong>.
+            </div>
+          )}
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
@@ -395,7 +480,9 @@ export const RentalsPage = () => {
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Financeiro</p>
                   <p className="mt-1 text-blue-800">Diária: <strong>{formatCurrencyBRL(detail.valor_diaria)}</strong></p>
-                  <p className="text-lg font-bold text-blue-900">Total: {formatCurrencyBRL(detail.valor_total)}</p>
+                  <p className="text-blue-800">Previsto: <strong>{formatCurrencyBRL(detail.valor_previsto ?? detail.valor_total)}</strong></p>
+                  <p className="text-blue-800">Adicional: <strong>{formatCurrencyBRL(detail.valor_adicional ?? 0)}</strong></p>
+                  <p className="text-lg font-bold text-blue-900">Final: {formatCurrencyBRL(detail.valor_final ?? detail.valor_total)}</p>
                 </div>
               </div>
             </div>

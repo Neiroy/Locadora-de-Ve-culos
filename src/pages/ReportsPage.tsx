@@ -27,7 +27,7 @@ const DEFAULT_FILTERS: HistoryFilters = {
   paymentMethod: "",
 };
 
-type SummaryRow = Pick<Locacao, "valor_total" | "km_saida" | "km_entrada" | "km_rodado">;
+type SummaryRow = Pick<Locacao, "valor_total" | "valor_previsto" | "valor_adicional" | "km_saida" | "km_entrada" | "km_rodado">;
 
 const toKmDriven = (row: Pick<Locacao, "km_saida" | "km_entrada" | "km_rodado">) => {
   if (row.km_rodado !== null && row.km_rodado !== undefined) return row.km_rodado;
@@ -41,7 +41,7 @@ export const ReportsPage = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Locacao[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [summary, setSummary] = useState({ total: 0, totalReceived: 0, totalKm: 0, averageTicket: 0 });
+  const [summary, setSummary] = useState({ total: 0, totalReceived: 0, totalPlanned: 0, totalAdditional: 0, totalKm: 0, averageTicket: 0 });
   const [filters, setFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Locacao | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,7 +86,7 @@ export const ReportsPage = () => {
   const loadSummary = async () => {
     let query = supabase
       .from("locacoes")
-      .select("valor_total,km_saida,km_entrada,km_rodado,clientes!inner(nome),carros!inner(placa)")
+      .select("valor_total,valor_previsto,valor_adicional,km_saida,km_entrada,km_rodado,clientes!inner(nome),carros!inner(placa)")
       .in("status", ["finalizada", "cancelada"]);
 
     if (filters.status) query = query.eq("status", filters.status);
@@ -102,9 +102,11 @@ export const ReportsPage = () => {
     const rows = (data as SummaryRow[]) || [];
     const total = rows.length;
     const totalReceived = rows.reduce((acc, row) => acc + (row.valor_total || 0), 0);
+    const totalPlanned = rows.reduce((acc, row) => acc + Number((row as Locacao).valor_previsto || (row as Locacao).valor_total || 0), 0);
+    const totalAdditional = rows.reduce((acc, row) => acc + Number((row as Locacao).valor_adicional || 0), 0);
     const totalKm = rows.reduce((acc, row) => acc + toKmDriven(row), 0);
     const averageTicket = total > 0 ? totalReceived / total : 0;
-    setSummary({ total, totalReceived, totalKm, averageTicket });
+    setSummary({ total, totalReceived, totalPlanned, totalAdditional, totalKm, averageTicket });
   };
 
   useEffect(() => {
@@ -158,7 +160,9 @@ export const ReportsPage = () => {
       "Placa",
       "Diaria",
       "Qtd Diarias",
-      "Valor Pago",
+      "Valor Previsto",
+      "Valor Adicional",
+      "Valor Final",
       "Retirada",
       "Prevista",
       "Devolucao",
@@ -174,7 +178,9 @@ export const ReportsPage = () => {
       row.carros?.placa || "-",
       formatCurrencyBRL(row.valor_diaria || 0),
       row.quantidade_diarias || 0,
-      formatCurrencyBRL(row.valor_total || 0),
+      formatCurrencyBRL(row.valor_previsto || row.valor_total || 0),
+      formatCurrencyBRL(row.valor_adicional || 0),
+      formatCurrencyBRL(row.valor_final || row.valor_total || 0),
       formatDateTime(row.data_retirada),
       formatDateTime(row.data_prevista_devolucao),
       formatDateTime(row.data_devolucao_real),
@@ -218,6 +224,13 @@ export const ReportsPage = () => {
             <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 ring-1 ring-emerald-100"><CircleDollarSign size={16} /></div>
           </div>
           <p className="text-3xl font-bold tracking-tight text-slate-900">{formatCurrencyBRL(summaryCards.totalReceived)}</p>
+        </Card>
+        <Card className="min-h-[130px]">
+          <div className="mb-3 flex items-start justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor adicional</p>
+            <div className="rounded-xl bg-violet-50 p-2 text-violet-600 ring-1 ring-violet-100"><CircleDollarSign size={16} /></div>
+          </div>
+          <p className="text-3xl font-bold tracking-tight text-slate-900">{formatCurrencyBRL(summaryCards.totalAdditional)}</p>
         </Card>
 
         <Card className="min-h-[130px]">
@@ -321,7 +334,7 @@ export const ReportsPage = () => {
                   <p className="text-sm text-slate-600">{row.carros?.marca} {row.carros?.modelo} ({row.carros?.placa ? maskPlate(row.carros.placa) : "-"})</p>
                   <p className="mt-1 text-sm text-slate-500">Retirada: {formatDate(row.data_retirada)} | Devolução: {formatDate(row.data_devolucao_real)}</p>
                   <p className="mt-1 text-sm text-slate-500">KM: {formatKm(row.km_saida)} {"->"} {formatKm(row.km_entrada)} ({formatKm(toKmDriven(row))})</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-800">{formatCurrencyBRL(row.valor_total)}</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-800">{formatCurrencyBRL(row.valor_final || row.valor_total)}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Button variant="outline" onClick={() => setSelected(row)}>Detalhes</Button>
                     <Link to={`/contratos/${row.id}`}><Button variant="outline">Contrato</Button></Link>
@@ -341,7 +354,9 @@ export const ReportsPage = () => {
                     <th className="px-4 py-3">Placa</th>
                     <th className="px-4 py-3">Retirada</th>
                     <th className="px-4 py-3">Devolução</th>
-                    <th className="px-4 py-3">Valor Pago</th>
+                    <th className="px-4 py-3">Previsto</th>
+                    <th className="px-4 py-3">Adicional</th>
+                    <th className="px-4 py-3">Valor Final</th>
                     <th className="px-4 py-3">KM Saída</th>
                     <th className="px-4 py-3">KM Devolução</th>
                     <th className="px-4 py-3">KM Rodado</th>
@@ -358,7 +373,9 @@ export const ReportsPage = () => {
                       <td className="px-4 py-3 text-slate-600">{row.carros?.placa ? maskPlate(row.carros.placa) : "-"}</td>
                       <td className="px-4 py-3 text-slate-500">{formatDate(row.data_retirada)}</td>
                       <td className="px-4 py-3 text-slate-500">{formatDate(row.data_devolucao_real)}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-700">{formatCurrencyBRL(row.valor_total || 0)}</td>
+                      <td className="px-4 py-3 text-slate-700">{formatCurrencyBRL(row.valor_previsto || row.valor_total || 0)}</td>
+                      <td className="px-4 py-3 text-slate-700">{formatCurrencyBRL(row.valor_adicional || 0)}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-700">{formatCurrencyBRL(row.valor_final || row.valor_total || 0)}</td>
                       <td className="px-4 py-3 text-slate-600">{formatKm(row.km_saida)}</td>
                       <td className="px-4 py-3 text-slate-600">{formatKm(row.km_entrada)}</td>
                       <td className="px-4 py-3 text-slate-600">{formatKm(toKmDriven(row))}</td>
@@ -450,7 +467,11 @@ export const ReportsPage = () => {
                 <div className="mt-3 space-y-1 text-sm text-slate-600">
                   <p><strong>Valor da diária:</strong> {formatCurrencyBRL(selected.valor_diaria || 0)}</p>
                   <p><strong>Quantidade de diárias:</strong> {selected.quantidade_diarias || 0}</p>
-                  <p><strong>Valor total pago:</strong> {formatCurrencyBRL(selected.valor_total || 0)}</p>
+                  <p><strong>Valor previsto:</strong> {formatCurrencyBRL(selected.valor_previsto || selected.valor_total || 0)}</p>
+                  <p><strong>Valor adicional:</strong> {formatCurrencyBRL(selected.valor_adicional || 0)}</p>
+                  <p><strong>Valor final:</strong> {formatCurrencyBRL(selected.valor_final || selected.valor_total || 0)}</p>
+                  <p><strong>Dias extras:</strong> {selected.dias_extras || 0}</p>
+                  <p><strong>Horas de atraso:</strong> {(selected.horas_atraso || 0).toFixed(2)}h</p>
                 </div>
               </Card>
 

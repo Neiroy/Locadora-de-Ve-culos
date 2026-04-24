@@ -13,7 +13,7 @@ export const ContractsPage = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data } = await supabase.from("locacoes").select("*,clientes(nome),carros(marca,modelo,placa)").not("contrato_html", "is", null).order("created_at", { ascending: false });
+      const { data } = await supabase.from("locacoes").select("*,clientes(nome),carros(marca,modelo,placa)").order("created_at", { ascending: false });
       setLoading(false);
       const rows = ((data as Locacao[]) || []).filter((item) => {
         if (!search.trim()) return true;
@@ -46,7 +46,7 @@ export const ContractsPage = () => {
               <span className="font-medium">{formatCurrencyBRL(item.valor_total)}</span>
             </div>
             <div className="mt-3">
-              <Link to={`/contratos/${item.id}`}><Button variant="outline">Visualizar</Button></Link>
+              <Link to={`/contratos/${item.id}`}><Button variant="outline">Gerar Contrato</Button></Link>
             </div>
           </div>
         ))}
@@ -62,7 +62,7 @@ export const ContractsPage = () => {
                 <td className="px-4 py-3 text-slate-600">{item.carros?.marca} {item.carros?.modelo} ({item.carros?.placa ? maskPlate(item.carros.placa) : "-"})</td>
                 <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{formatDate(item.data_retirada)}</td>
                 <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{formatCurrencyBRL(item.valor_total)}</td>
-                <td className="px-4 py-3 text-right"><Link to={`/contratos/${item.id}`}><Button variant="outline">Visualizar</Button></Link></td>
+                <td className="px-4 py-3 text-right"><Link to={`/contratos/${item.id}`}><Button variant="outline">Gerar Contrato</Button></Link></td>
               </tr>
             ))}
           </tbody>
