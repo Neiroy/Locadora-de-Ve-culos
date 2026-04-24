@@ -263,27 +263,83 @@ export const RentalsPage = () => {
             <Input inputMode="numeric" value={newRental.quantidade_diarias} readOnly />
             <p className="mt-1 text-xs text-slate-500">Diárias calculadas automaticamente pelo período selecionado.</p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
-            <p>Cliente: <strong>{clienteSelecionado?.nome || "-"}</strong></p>
-            <p>CPF/CNH: <strong>{clienteSelecionado ? `${clienteSelecionado.cpf} | ${clienteSelecionado.cnh}` : "-"}</strong></p>
-            <p>Telefone: <strong>{clienteSelecionado?.telefone || "-"}</strong></p>
-            <p>KM saída: <strong>{formatKm(carroSelecionado?.km_atual)}</strong></p>
-            <p>Valor diária: <strong>{formatCurrencyBRL(carroSelecionado?.valor_diaria ?? 0)}</strong></p>
-            <p>Status carro: <strong>{carroSelecionado?.status || "-"}</strong></p>
-            <p>Valor total: <strong>{formatCurrencyBRL(totalPreview)}</strong></p>
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm md:col-span-2">
+            <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumo da locação</p>
+                <p className="text-sm text-slate-700">Confira os dados antes de gerar contrato</p>
+              </div>
+              <Badge status={carroSelecionado?.status || "disponivel"} />
+            </div>
+
+            <div className="grid gap-3 text-sm md:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
+                <p className="mt-1 font-semibold text-slate-800">{clienteSelecionado?.nome || "-"}</p>
+                <p className="mt-1 text-slate-600">
+                  CPF/CNH: <strong>{clienteSelecionado ? `${clienteSelecionado.cpf} | ${clienteSelecionado.cnh}` : "-"}</strong>
+                </p>
+                <p className="text-slate-600">Telefone: <strong>{clienteSelecionado?.telefone || "-"}</strong></p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Veículo</p>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {carroSelecionado ? `${carroSelecionado.marca} ${carroSelecionado.modelo}` : "-"}
+                </p>
+                <p className="mt-1 text-slate-600">
+                  Placa: <strong>{carroSelecionado?.placa || "-"}</strong>
+                </p>
+                <p className="text-slate-600">KM saída: <strong>{formatKm(carroSelecionado?.km_atual)}</strong></p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diárias</p>
+                <p className="mt-1 font-semibold text-slate-800">{diarias || 0}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor da diária</p>
+                <p className="mt-1 font-semibold text-slate-800">{formatCurrencyBRL(carroSelecionado?.valor_diaria ?? 0)}</p>
+              </div>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Valor total</p>
+                <p className="mt-1 text-lg font-bold text-blue-800">{formatCurrencyBRL(totalPreview)}</p>
+              </div>
+            </div>
           </div>
         </div>
         <div className="mt-4"><Button disabled={saving || !newRental.cliente_id || !newRental.carro_id || !newRental.data_retirada || !newRental.data_prevista_devolucao} onClick={createRental}>{saving ? "Salvando..." : "Gerar locação e contrato"}</Button></div>
       </Modal>
 
       <Modal open={!!openReturn} title="Finalizar devolução" onClose={() => setOpenReturn(null)}>
-        <div className="space-y-2 text-sm">
-          <p>Cliente: <strong>{openReturn?.clientes?.nome}</strong></p>
-          <p>Veículo: <strong>{openReturn?.carros?.marca} {openReturn?.carros?.modelo} ({openReturn?.carros?.placa})</strong></p>
-          <p>Retirada: <strong>{formatDateTime(openReturn?.data_retirada)}</strong> | Prevista: <strong>{formatDateTime(openReturn?.data_prevista_devolucao)}</strong></p>
-          <p>KM saída: <strong>{formatKm(openReturn?.km_saida)}</strong></p>
-          <p>Valor total da locação: <strong>{formatCurrencyBRL(openReturn?.valor_total || 0)}</strong></p>
-          <p>KM rodado (prévia): <strong>{formatKm(kmRodadoPreview)}</strong></p>
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumo da devolução</p>
+              <p className="text-sm text-slate-700">Confira os dados antes de finalizar</p>
+            </div>
+            <Badge status={openReturn?.status || "aberta"} />
+          </div>
+          <div className="grid gap-3 text-sm md:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
+              <p className="mt-1 font-semibold text-slate-800">{openReturn?.clientes?.nome || "-"}</p>
+              <p className="mt-1 text-slate-600">
+                Veículo: <strong>{openReturn?.carros?.marca} {openReturn?.carros?.modelo} ({openReturn?.carros?.placa})</strong>
+              </p>
+              <p className="text-slate-600">
+                Período: <strong>{formatDateTime(openReturn?.data_retirada)} - {formatDateTime(openReturn?.data_prevista_devolucao)}</strong>
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valores e KM</p>
+              <p className="mt-1 text-slate-600">KM saída: <strong>{formatKm(openReturn?.km_saida)}</strong></p>
+              <p className="text-slate-600">KM rodado (prévia): <strong>{formatKm(kmRodadoPreview)}</strong></p>
+              <p className="text-slate-600">Valor total: <strong>{formatCurrencyBRL(openReturn?.valor_total || 0)}</strong></p>
+            </div>
+          </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
@@ -298,21 +354,52 @@ export const RentalsPage = () => {
 
       <Modal open={!!detail} title="Detalhes da locação" onClose={() => setDetail(null)}>
         {detail && (
-          <div className="grid gap-2 text-sm md:grid-cols-2">
-            <p>Cliente: <strong>{detail.clientes?.nome}</strong></p>
-            <p>Veículo: <strong>{detail.carros?.marca} {detail.carros?.modelo} ({detail.carros?.placa})</strong></p>
-            <p>Período: <strong>{formatDateTime(detail.data_retirada)} - {formatDateTime(detail.data_prevista_devolucao)}</strong></p>
-            <p>Status: <Badge status={detail.status as RentalStatus} /></p>
-            <p>Diárias: <strong>{detail.quantidade_diarias}</strong></p>
-            <p>Valor diária: <strong>{formatCurrencyBRL(detail.valor_diaria)}</strong></p>
-            <p>Valor total: <strong>{formatCurrencyBRL(detail.valor_total)}</strong></p>
-            <p>KM saída: <strong>{formatKm(detail.km_saida)}</strong></p>
-            <p>KM entrada: <strong>{formatKm(detail.km_entrada)}</strong></p>
-            <p>KM rodado: <strong>{formatKm(detail.km_rodado)}</strong></p>
-            <p>Criado em: <strong>{formatDateTime(detail.created_at)}</strong></p>
-            <p>Usuário responsável: <strong>{detail.profiles?.nome || detail.profiles?.email || "-"}</strong></p>
-            <p className="md:col-span-2">Observações da devolução: <strong>{detail.observacoes_devolucao || "-"}</strong></p>
-            <div className="md:col-span-2">
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumo da locação</p>
+                  <p className="text-sm text-slate-700">Informações detalhadas do contrato e operação</p>
+                </div>
+                <Badge status={detail.status as RentalStatus} />
+              </div>
+              <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente</p>
+                  <p className="mt-1 font-semibold text-slate-800">{detail.clientes?.nome || "-"}</p>
+                  <p className="mt-1 text-slate-600">
+                    Veículo: <strong>{detail.carros?.marca} {detail.carros?.modelo} ({detail.carros?.placa})</strong>
+                  </p>
+                  <p className="text-slate-600">
+                    Período: <strong>{formatDateTime(detail.data_retirada)} - {formatDateTime(detail.data_prevista_devolucao)}</strong>
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Auditoria</p>
+                  <p className="mt-1 text-slate-600">Criado em: <strong>{formatDateTime(detail.created_at)}</strong></p>
+                  <p className="text-slate-600">Usuário responsável: <strong>{detail.profiles?.nome || detail.profiles?.email || "-"}</strong></p>
+                  <p className="text-slate-600">Observações: <strong>{detail.observacoes_devolucao || "-"}</strong></p>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diárias</p>
+                  <p className="mt-1 font-semibold text-slate-800">{detail.quantidade_diarias}</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">KM</p>
+                  <p className="mt-1 text-slate-700">Saída: <strong>{formatKm(detail.km_saida)}</strong></p>
+                  <p className="text-slate-700">Entrada: <strong>{formatKm(detail.km_entrada)}</strong></p>
+                  <p className="text-slate-700">Rodado: <strong>{formatKm(detail.km_rodado)}</strong></p>
+                </div>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Financeiro</p>
+                  <p className="mt-1 text-blue-800">Diária: <strong>{formatCurrencyBRL(detail.valor_diaria)}</strong></p>
+                  <p className="text-lg font-bold text-blue-900">Total: {formatCurrencyBRL(detail.valor_total)}</p>
+                </div>
+              </div>
+            </div>
+            <div>
               <Link to={`/contratos/${detail.id}`}><Button>Visualizar e imprimir contrato</Button></Link>
             </div>
           </div>
